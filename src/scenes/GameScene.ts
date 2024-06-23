@@ -1,12 +1,15 @@
+import { Vector } from 'matter'
 import { CONST } from '../const/const'
-import { Tile } from '../objects/tile'
+import { Tile } from '../objects/Tile'
+import { TileGrid } from '../objects/TileGrid'
+import { TilePool } from '../objects/TilePool'
 
 export class GameScene extends Phaser.Scene {
     // Variables
     private canMove: boolean
 
     // Grid with tiles
-    private tileGrid: (Tile | undefined)[][]
+    private tileGrid: TileGrid
 
     // Selected Tiles
     private firstSelectedTile: Tile | undefined
@@ -19,6 +22,8 @@ export class GameScene extends Phaser.Scene {
     }
 
     init(): void {
+
+
         // Init variables
         this.canMove = true
 
@@ -26,13 +31,7 @@ export class GameScene extends Phaser.Scene {
         this.cameras.main.setBackgroundColor(0x78aade)
 
         // Init grid with tiles
-        this.tileGrid = []
-        for (let y = 0; y < CONST.gridHeight; y++) {
-            this.tileGrid[y] = []
-            for (let x = 0; x < CONST.gridWidth; x++) {
-                this.tileGrid[y][x] = this.addTile(x, y)
-            }
-        }
+        this.tileGrid = new TileGrid(this)
 
         // Selected Tiles
         this.firstSelectedTile = undefined
@@ -46,25 +45,6 @@ export class GameScene extends Phaser.Scene {
     }
 
     /**
-     * Add a new random tile at the specified position.
-     * @param x
-     * @param y
-     */
-    private addTile(x: number, y: number): Tile {
-        // Get a random tile
-        let randomTileType: string =
-            CONST.candyTypes[Phaser.Math.RND.between(0, CONST.candyTypes.length - 1)]
-
-        // Return the created tile
-        return new Tile({
-            scene: this,
-            x: x * CONST.tileWidth,
-            y: y * CONST.tileHeight,
-            texture: randomTileType,
-        })
-    }
-
-    /**
      * This function gets called, as soon as a tile has been pressed or clicked.
      * It will check, if a move can be done at first.
      * Then it will check if a tile was already selected before or not (if -> else)
@@ -73,13 +53,22 @@ export class GameScene extends Phaser.Scene {
      * @param event
      */
     private tileDown(pointer: any, gameobject: any, event: any): void {
+        console.log(this.canMove)
         if (this.canMove) {
             if (!this.firstSelectedTile) {
                 this.firstSelectedTile = gameobject
+                this.firstSelectedTile!.getSelected()
+                console.log("pick")
             } else {
-                // So if we are here, we must have selected a second tile
                 this.secondSelectedTile = gameobject
-
+                if (this.firstSelectedTile === this.secondSelectedTile) {
+                    this.firstSelectedTile.getDeselected()
+                    console.log("unpick")
+                    this.firstSelectedTile = undefined
+                    this.secondSelectedTile = undefined
+                    return
+                }
+                // Check if the two selected tiles are adjacent
                 let dx =
                     Math.abs(this.firstSelectedTile.x - this.secondSelectedTile!.x) /
                     CONST.tileWidth
@@ -90,7 +79,13 @@ export class GameScene extends Phaser.Scene {
                 // Check if the selected tiles are both in range to make a move
                 if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
                     this.canMove = false
+                    this.firstSelectedTile.getDeselected()
                     this.swapTiles()
+                } else {
+                    this.firstSelectedTile.getDeselected()
+                    this.firstSelectedTile = this.secondSelectedTile
+                    this.firstSelectedTile!.getSelected()
+                    this.secondSelectedTile = undefined
                 }
             }
         }
@@ -103,21 +98,26 @@ export class GameScene extends Phaser.Scene {
     private swapTiles(): void {
         if (this.firstSelectedTile && this.secondSelectedTile) {
             // Get the position of the two tiles
+            // x = 0, y = 0 is the top left corner
             let firstTilePosition = {
-                x: this.firstSelectedTile.x,
-                y: this.firstSelectedTile.y,
+                x: this.firstSelectedTile.x - CONST.tileWidth / 2,
+                y: this.firstSelectedTile.y - CONST.tileHeight / 2,
             }
 
+            // x1 = 0, y1 = 72 is the position of the second tile
+
             let secondTilePosition = {
-                x: this.secondSelectedTile.x,
-                y: this.secondSelectedTile.y,
+                x: this.secondSelectedTile.x - CONST.tileWidth / 2,
+                y: this.secondSelectedTile.y - CONST.tileHeight / 2,
             }
 
             // Swap them in our grid with the tiles
-            this.tileGrid[firstTilePosition.y / CONST.tileHeight][
+            this.tileGrid.getTileGrid()![firstTilePosition.y / CONST.tileHeight][
                 firstTilePosition.x / CONST.tileWidth
             ] = this.secondSelectedTile
-            this.tileGrid[secondTilePosition.y / CONST.tileHeight][
+
+
+            this.tileGrid.getTileGrid()![secondTilePosition.y / CONST.tileHeight][
                 secondTilePosition.x / CONST.tileWidth
             ] = this.firstSelectedTile
 
@@ -145,12 +145,15 @@ export class GameScene extends Phaser.Scene {
                 },
             })
 
+            console.log("swap 2")
+            console.log(this.firstSelectedTile)
+            console.log(this.secondSelectedTile)
             this.firstSelectedTile =
-                this.tileGrid[firstTilePosition.y / CONST.tileHeight][
+                this.tileGrid.getTileGrid()![firstTilePosition.y / CONST.tileHeight][
                     firstTilePosition.x / CONST.tileWidth
                 ]
             this.secondSelectedTile =
-                this.tileGrid[secondTilePosition.y / CONST.tileHeight][
+                this.tileGrid.getTileGrid()![secondTilePosition.y / CONST.tileHeight][
                     secondTilePosition.x / CONST.tileWidth
                 ]
         }
@@ -159,7 +162,7 @@ export class GameScene extends Phaser.Scene {
     private checkMatches(): void {
         //Call the getMatches function to check for spots where there is
         //a run of three or more tiles in a row
-        let matches = this.getMatches(this.tileGrid)
+        let matches = this.getMatches(this.tileGrid.getTileGrid()!)
 
         //If there are matches, remove them
         if (matches.length > 0) {
@@ -181,19 +184,22 @@ export class GameScene extends Phaser.Scene {
 
     private resetTile(): void {
         // Loop through each column starting from the left
-        for (let y = this.tileGrid.length - 1; y > 0; y--) {
+        for (let y = this.tileGrid.getTileGrid()!.length - 1; y > 0; y--) {
             // Loop through each tile in column from bottom to top
-            for (let x = this.tileGrid[y].length - 1; x > 0; x--) {
+            for (let x = this.tileGrid.getTileGrid()![y].length - 1; x > 0; x--) {
                 // If this space is blank, but the one above it is not, move the one above down
-                if (this.tileGrid[y][x] === undefined && this.tileGrid[y - 1][x] !== undefined) {
+                if (
+                    this.tileGrid.getTileGrid()![y][x] === undefined &&
+                    this.tileGrid.getTileGrid()![y - 1][x] !== undefined
+                ) {
                     // Move the tile above down one
-                    let tempTile = this.tileGrid[y - 1][x]
-                    this.tileGrid[y][x] = tempTile
-                    this.tileGrid[y - 1][x] = undefined
+                    let tempTile = this.tileGrid.getTileGrid()![y - 1][x]
+                    this.tileGrid.getTileGrid()![y][x] = tempTile
+                    this.tileGrid.getTileGrid()![y - 1][x] = undefined
 
                     this.add.tween({
                         targets: tempTile,
-                        y: CONST.tileHeight * y,
+                        y: CONST.tileHeight * y + CONST.tileHeight / 2,
                         ease: 'Linear',
                         duration: 200,
                         repeat: 0,
@@ -203,7 +209,7 @@ export class GameScene extends Phaser.Scene {
                     //The positions have changed so start this process again from the bottom
                     //NOTE: This is not set to me.tileGrid[i].length - 1 because it will immediately be decremented as
                     //we are at the end of the loop.
-                    x = this.tileGrid[y].length
+                    x = this.tileGrid.getTileGrid()![y].length
                 }
             }
         }
@@ -211,14 +217,15 @@ export class GameScene extends Phaser.Scene {
 
     private fillTile(): void {
         //Check for blank spaces in the grid and add new tiles at that position
-        for (var y = 0; y < this.tileGrid.length; y++) {
-            for (var x = 0; x < this.tileGrid[y].length; x++) {
-                if (this.tileGrid[y][x] === undefined) {
+        for (var y = 0; y < this.tileGrid.getTileGrid()!.length; y++) {
+            for (var x = 0; x < this.tileGrid.getTileGrid()![y].length; x++) {
+                if (this.tileGrid.getTileGrid()![y][x] === undefined) {
                     //Found a blank spot so lets add animate a tile there
-                    let tile = this.addTile(x, y)
+                    // let tile = this.tileGrid.addTile(x, y)
+                    let tile = TilePool.getInstance(this).getTile(x, y)
 
                     //And also update our "theoretical" grid
-                    this.tileGrid[y][x] = tile
+                    this.tileGrid.getTileGrid()![y][x] = tile
                 }
             }
         }
@@ -238,12 +245,13 @@ export class GameScene extends Phaser.Scene {
             for (var j = 0; j < tempArr.length; j++) {
                 let tile = tempArr[j]
                 //Find where this tile lives in the theoretical grid
-                let tilePos = this.getTilePos(this.tileGrid, tile)
+                let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
 
                 // Remove the tile from the theoretical grid
                 if (tilePos.x !== -1 && tilePos.y !== -1) {
-                    tile.destroy()
-                    this.tileGrid[tilePos.y][tilePos.x] = undefined
+                    TilePool.getInstance(this).returnTile(tile)
+                    // tile.destroy()
+                    this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
                 }
             }
         }
