@@ -66,17 +66,6 @@ export class GameScene extends Phaser.Scene {
         this.tileGrid.stopIdleAnimation()
     }
 
-    private tweenPromise(targets: any, props: any, duration: number): Promise<void> {
-        return new Promise((resolve) => {
-            this.add.tween({
-                targets,
-                ...props,
-                duration,
-                onComplete: resolve,
-            });
-        });
-    }
-    
 
     /**
      * This function gets called, as soon as a tile has been pressed or clicked.
@@ -190,7 +179,7 @@ export class GameScene extends Phaser.Scene {
         }
     }
 
-    private combine(matches: any, p0: () => void): void {
+    private async combine(matches: any, p0: () => void): Promise<void> {
         let hasTween = false
 
         for (var i = 0; i < matches.length; i++) {
@@ -214,6 +203,7 @@ export class GameScene extends Phaser.Scene {
                         onComplete: () => {
                             TilePool.getInstance(this).returnTile(tile)
                             this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
+                            this.removeTileGroup()
                         },
                         onCompleteParams: [tile],
                     })
@@ -224,7 +214,7 @@ export class GameScene extends Phaser.Scene {
 
         if (hasTween) {
             // Delay the callback if there's a tween
-            this.time.delayedCall(200, p0, undefined, this)
+            this.time.delayedCall(300, p0, undefined, this)
         } else {
             // Call the callback immediately if no tween
             p0()
@@ -238,29 +228,33 @@ export class GameScene extends Phaser.Scene {
 
         //If there are matches, remove them
         if (matches.length > 0) {
-            this.combine(matches, () => {
-                this.removeTileGroup(matches, () =>
-                    this.time.delayedCall(250, () => {
-                        this.resetTile(() => {
-                            this.time.delayedCall(300, () => {
-                                this.tileUp(() => {
-                                    this.checkMatches()
-                                })
-                            })
-                        })
-                    })
-                )
-            })
+            // this.combine(matches, () => {
+            //     this.removeTileGroup(matches, () =>
+            //         this.time.delayedCall(350, () => {
+            //             this.resetTile(() => {
+            //                 this.time.delayedCall(350, () => {
+            //                     this.tileUp()
+            //                     this.checkMatches()
+            //                 })
+            //             })
+            //         })
+            //     )
+            // })
+
+
+
+
         } else {
             // No match so just swap the tiles back to their original position and reset
             this.swapTiles()
-            this.tileUp(() => {
-                this.canMove = true
-            })
+            this.tileUp()
+
+            this.canMove = true
         }
     }
 
-    private resetTile(p0: () => void): void {
+
+    private async resetTile(p0: () => void): Promise<void> {
         // Loop through each column starting from the bottom row
         for (let y = this.tileGrid.getTileGrid()!.length - 1; y > 0; y--) {
             // Loop through each tile in the column from right to left
@@ -329,11 +323,10 @@ export class GameScene extends Phaser.Scene {
         p0()
     }
 
-    private tileUp(p0: () => void): void {
+    private tileUp(): void {
         // Reset active tiles
         this.firstSelectedTile = undefined
         this.secondSelectedTile = undefined
-        p0()
     }
 
     private removeTileGroup(matches: any, p0: () => void): void {
