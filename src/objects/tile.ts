@@ -3,6 +3,7 @@ import { ImageConstructor } from '../interfaces/image.interface'
 export class Tile extends Phaser.GameObjects.Image {
     private isSelect: boolean = false
     private tweenSelected: Phaser.Tweens.Tween
+    private particleEmitter: Phaser.GameObjects.Particles.ParticleEmitter | undefined
 
     constructor(params: ImageConstructor) {
         super(params.scene, params.x, params.y, params.texture, params.frame)
@@ -40,4 +41,32 @@ export class Tile extends Phaser.GameObjects.Image {
             this.isSelect = false
         }
     }
+
+    public explode3(): void {
+        
+        const explode3 =  this.scene.add.particles(this.x, this.y, 'flare', {
+            lifespan: 4000,
+            speed: { min: 250, max: 500 },
+            scale: { start: 0.4, end: 0 },
+            gravityY: 150,
+            blendMode: 'ADD',
+            emitting: false
+        })
+
+        explode3.explode(30)
+    }
+
+
+    public emit4(): void {
+
+
+        
+            
+
+
+
+    }
+
+        
+
 }
