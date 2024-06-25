@@ -3,7 +3,8 @@ import { ImageConstructor } from '../interfaces/image.interface'
 export class Tile extends Phaser.GameObjects.Image {
     private isSelect: boolean = false
     private tweenSelected: Phaser.Tweens.Tween
-    private particleEmitter: Phaser.GameObjects.Particles.ParticleEmitter | undefined
+    private isCombine4: boolean = false
+    private isCombine5: boolean = false
 
     constructor(params: ImageConstructor) {
         super(params.scene, params.x, params.y, params.texture, params.frame)
@@ -43,30 +44,35 @@ export class Tile extends Phaser.GameObjects.Image {
     }
 
     public explode3(): void {
-        
-        const explode3 =  this.scene.add.particles(this.x, this.y, 'flare', {
+        const explode3 = this.scene.add.particles(this.x, this.y, 'flare', {
             lifespan: 4000,
             speed: { min: 250, max: 500 },
             scale: { start: 0.4, end: 0 },
             gravityY: 150,
             blendMode: 'ADD',
-            emitting: false
+            emitting: false,
         })
 
-        explode3.explode(30)
+        explode3.explode(15)
     }
 
+    public enableCombine4(): void {
+        this.isCombine4 = true
 
-    public emit4(): void {
-
-
-        
-            
-
-
-
+        if (this.isCombine4) {
+            this.scene.add
+                .particles(this.x, this.y, 'flare', {
+                    frame: 'white',
+                    color: [0xfacc22, 0xf89800, 0xf83600, 0x9f0404],
+                    colorEase: 'quad.out',
+                    lifespan: 1000,
+                    angle: { min: -100, max: -80 },
+                    scale: { start: 0.7, end: 0, ease: 'sine.out' },
+                    speed: 100,
+                    advance: 2000,
+                    blendMode: 'ADD',
+                })
+                .startFollow(this, -this.x, -this.y).setDepth(-1)
+        }
     }
-
-        
-
 }
