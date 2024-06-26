@@ -72,6 +72,29 @@ export class TileGrid extends Phaser.GameObjects.Container {
         }
     }
 
+    public removeMatch4(tempArr : Tile[]) : void{
+        
+    }
 
+
+
+
+    private getTilePos(tileGrid: (Tile | undefined)[][], tile: Tile): any {
+        let pos = { x: -1, y: -1 }
+
+        //Find the position of a specific tile in the grid
+        for (let y = 0; y < tileGrid.length; y++) {
+            for (let x = 0; x < tileGrid[y].length; x++) {
+                //There is a match at this position so return the grid coords
+                if (tile === tileGrid[y][x]) {
+                    pos.x = x
+                    pos.y = y
+                    break
+                }
+            }
+        }
+
+        return pos
+    }
 
 }

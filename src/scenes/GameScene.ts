@@ -1,4 +1,3 @@
-import { Vector } from 'matter'
 import { CONST } from '../const/const'
 import { Tile } from '../objects/Tile'
 import { TileGrid } from '../objects/TileGrid'
@@ -268,6 +267,9 @@ export class GameScene extends Phaser.Scene {
 
             this.canMove = true
         }
+
+        console.log(this.tileGrid.getTileGrid()!)
+    
     }
 
     private async resetTile(p0: () => void): Promise<void> {
@@ -292,6 +294,7 @@ export class GameScene extends Phaser.Scene {
                                 repeat: 0,
                                 yoyo: false,
                                 autoDestroy: true,
+                             
                             })
 
                             foundTile = true
@@ -328,6 +331,7 @@ export class GameScene extends Phaser.Scene {
                         duration: 300,
                         repeat: 0,
                         yoyo: false,
+                        
                     })
 
                     // Update the grid with the new tile
@@ -354,310 +358,197 @@ export class GameScene extends Phaser.Scene {
         for (var i = 0; i < matches.length; i++) {
             var tempArr = matches[i]
 
-            for (var j = 0; j < tempArr.length; j++) {
-                let tile = tempArr[j]
-                //Find where this tile lives in the theoretical grid
-                let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
+            let glow4 = false
+            let glow5 = false
+            let positionGlow4 = -1
+            let positionGlow5 = -1
+            let horizontal = false
 
-                // Remove the tile from the theoretical grid
-                if (tilePos.x !== -1 && tilePos.y !== -1) {
-                    if (tile.getIsCombine4()) {
-                        console.log('at remove 4: ' + tilePos.x, tilePos.y)
+            for (let k = 0; k < tempArr.length - 1; k++) {
+                if (tempArr[k].x !== tempArr[k + 1].x) {
+                    horizontal = true
+                    break
+                }
+            }
 
-                        let horizontal = false
+            for (let j = 0; j < tempArr.length; j++) {
+                if (tempArr[j].getIsCombine4()) {
+                    positionGlow4 = j
+                    glow4 = true
+                    break
+                }
+                if (tempArr[j].getIsCombine5()) {
+                    glow5 = true
+                    positionGlow5 = j
+                    break
+                }
+            }
 
-                        for (let k = 0; k < tempArr.length; k++) {
-                            if (tempArr[k].x !== tile.x) {
-                                horizontal = true
-                                break
-                            }
-                        }
+            if (glow4) {
+                let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tempArr[0])
 
-                        if (horizontal) {
-                            if (j === 0) {
-                                let tilePos0 = this.getTilePos(
-                                    this.tileGrid.getTileGrid()!,
-                                    tempArr[0]
-                                )
+                console.log(tilePos)
 
-                                for (let i = 0; i < 3; i++) {
-                                    let aboveTile =
-                                        this.tileGrid.getTileGrid()![tilePos0.y - 1][tilePos0.x + i]
+                if (horizontal) {
+                    let tile = tempArr[positionGlow4]
+                    tile.disableCombine4()
+                    for (let k = 0; k < tempArr.length; k++) {
+                        if (tilePos.y != 0 && tilePos.x !== -1 && tilePos.y !== -1 && tilePos.y != 7) {
+                            let aboveTile =
+                                this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x + k]
+                            let tile = this.tileGrid.getTileGrid()![tilePos.y][tilePos.x + k]
+                            let belowTile =
+                                this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + k]
 
-                                    let downTile =
-                                        this.tileGrid.getTileGrid()![tilePos0.y + 1][tilePos0.x + i]
-
-                                    if (aboveTile) {
-                                        aboveTile?.explode3()
-                                        TilePool.getInstance(this).returnTile(aboveTile)
-                                        this.tileGrid.getTileGrid()![tilePos0.y - 1][
-                                            tilePos0.x + i
-                                        ] = undefined
-                                    }
-
-                                    if (downTile) {
-                                        downTile?.explode3()
-                                        TilePool.getInstance(this).returnTile(downTile)
-                                        this.tileGrid.getTileGrid()![tilePos0.y + 1][
-                                            tilePos0.x + i
-                                        ] = undefined
-                                    }
-                                }
-                            } else if (j === 1) {
-                                let tileAbove0 =
-                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x - 1]
-                                let tileAbove1 =
-                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x]
-                                let tileAbove2 =
-                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x + 1]
-                                let tileDown0 =
-                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x - 1]
-                                let tileDown1 =
-                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x]
-                                let tileDown2 =
-                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + 1]
-
-                                if (tileAbove0) {
-                                    tileAbove0.explode3()
-                                    TilePool.getInstance(this).returnTile(tileAbove0)
-                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x - 1] =
-                                        undefined
-                                }
-
-                                if (tileAbove1) {
-                                    tileAbove1.explode3()
-                                    TilePool.getInstance(this).returnTile(tileAbove1)
-                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x] =
-                                        undefined
-                                }
-
-                                if (tileAbove2) {
-                                    tileAbove2.explode3()
-                                    TilePool.getInstance(this).returnTile(tileAbove2)
-                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x + 1] =
-                                        undefined
-                                }
-
-                                if (tileDown0) {
-                                    tileDown0.explode3()
-                                    TilePool.getInstance(this).returnTile(tileDown0)
-                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x - 1] =
-                                        undefined
-                                }
-
-                                if (tileDown1) {
-                                    tileDown1.explode3()
-                                    TilePool.getInstance(this).returnTile(tileDown1)
-                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x] =
-                                        undefined
-                                }
-
-                                if (tileDown2) {
-                                    tileDown2.explode3()
-                                    TilePool.getInstance(this).returnTile(tileDown2)
-                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + 1] =
-                                        undefined
-                                }
-                            } else {
-                                let tilePos2 = this.getTilePos(
-                                    this.tileGrid.getTileGrid()!,
-                                    tempArr[2]
-                                )
-
-                                for (let i = 2; i >= 0; i--) {
-                                    let aboveTile =
-                                        this.tileGrid.getTileGrid()![tilePos2.y - 1][tilePos2.x - i]
-
-                                    let downTile =
-                                        this.tileGrid.getTileGrid()![tilePos2.y + 1][tilePos2.x - i]
-
-                                    if (aboveTile) {
-                                        aboveTile?.explode3()
-                                        TilePool.getInstance(this).returnTile(aboveTile)
-                                        this.tileGrid.getTileGrid()![tilePos2.y - 1][
-                                            tilePos2.x - i
-                                        ] = undefined
-                                    }
-
-                                    if (downTile) {
-                                        downTile?.explode3()
-                                        TilePool.getInstance(this).returnTile(downTile)
-                                        this.tileGrid.getTileGrid()![tilePos2.y + 1][
-                                            tilePos2.x - i
-                                        ] = undefined
-                                    }
-                                }
+                            if (aboveTile) {
+                                aboveTile.explode3()
+                                TilePool.getInstance(this).returnTile(aboveTile)
+                                this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x + k] =
+                                    undefined
                             }
 
-                            tile.disableCombine4()
+                            if (tile) {
+                                tile.explode3()
+                                TilePool.getInstance(this).returnTile(tile)
+                                this.tileGrid.getTileGrid()![tilePos.y][tilePos.x + k] = undefined
+                            }
+
+                            if (belowTile) {
+                                belowTile.explode3()
+                                TilePool.getInstance(this).returnTile(belowTile)
+                                this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + k] =
+                                    undefined
+                            }
                         } else {
-                            if (j === 0) {
-                                let tilePos0 = this.getTilePos(
-                                    this.tileGrid.getTileGrid()!,
-                                    tempArr[0]
-                                )
+                            if (tilePos.x !== -1 && tilePos.y !== -1 && tilePos.y != 7) {
+                                let tile = this.tileGrid.getTileGrid()![tilePos.y][tilePos.x + k]
+                                let belowTile =
+                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + k]
+                                let belowTile1 =
+                                    this.tileGrid.getTileGrid()![tilePos.y + 2][tilePos.x + k]
 
-                                for (let i = 0; i < 3; i++) {
-                                    let leftTile =
-                                        this.tileGrid.getTileGrid()![tilePos0.y + i][tilePos0.x - 1]
-                                    let rightTile =
-                                        this.tileGrid.getTileGrid()![tilePos0.y + i][tilePos0.x + 1]
-
-                                    if (leftTile) {
-                                        leftTile?.explode3()
-                                        TilePool.getInstance(this).returnTile(leftTile)
-                                        this.tileGrid.getTileGrid()![tilePos0.y + i][
-                                            tilePos0.x - 1
-                                        ] = undefined
-                                    }
-
-                                    if (rightTile) {
-                                        rightTile?.explode3()
-                                        TilePool.getInstance(this).returnTile(rightTile)
-                                        this.tileGrid.getTileGrid()![tilePos0.y + i][
-                                            tilePos0.x + 1
-                                        ] = undefined
-                                    }
-                                }
-                            } else if (j === 1) {
-                                let tileLeft0 =
-                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x - 1]
-                                let tileLeft1 =
-                                    this.tileGrid.getTileGrid()![tilePos.y][tilePos.x - 1]
-                                let tileLeft2 =
-                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x - 1]
-                                let tileRight0 =
-                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x + 1]
-                                let tileRight1 =
-                                    this.tileGrid.getTileGrid()![tilePos.y][tilePos.x + 1]
-                                let tileRight2 =
-                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + 1]
-
-                                if (tileLeft0) {
-                                    tileLeft0.explode3()
-                                    TilePool.getInstance(this).returnTile(tileLeft0)
-                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x - 1] =
+                                if (tile) {
+                                    tile.explode3()
+                                    TilePool.getInstance(this).returnTile(tile)
+                                    this.tileGrid.getTileGrid()![tilePos.y][tilePos.x + k] =
                                         undefined
                                 }
 
-                                if (tileLeft1) {
-                                    tileLeft1.explode3()
-                                    TilePool.getInstance(this).returnTile(tileLeft1)
-                                    this.tileGrid.getTileGrid()![tilePos.y][tilePos.x - 1] =
+                                if (belowTile) {
+                                    belowTile.explode3()
+                                    TilePool.getInstance(this).returnTile(belowTile)
+                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + k] =
                                         undefined
                                 }
 
-                                if (tileLeft2) {
-                                    tileLeft2.explode3()
-                                    TilePool.getInstance(this).returnTile(tileLeft2)
-                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x - 1] =
+                                if (belowTile1) {
+                                    belowTile1.explode3()
+                                    TilePool.getInstance(this).returnTile(belowTile1)
+                                    this.tileGrid.getTileGrid()![tilePos.y + 2][tilePos.x + k] =
                                         undefined
-                                }
-
-                                if (tileRight0) {
-                                    tileRight0.explode3()
-                                    TilePool.getInstance(this).returnTile(tileRight0)
-                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x + 1] =
-                                        undefined
-                                }
-
-                                if (tileRight1) {
-                                    tileRight1.explode3()
-                                    TilePool.getInstance(this).returnTile(tileRight1)
-                                    this.tileGrid.getTileGrid()![tilePos.y][tilePos.x + 1] =
-                                        undefined
-                                }
-
-                                if (tileRight2) {
-                                    tileRight2.explode3()
-                                    TilePool.getInstance(this).returnTile(tileRight2)
-                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + 1] =
-                                        undefined
-                                }
-                            } else {
-                                let tilePos2 = this.getTilePos(
-                                    this.tileGrid.getTileGrid()!,
-                                    tempArr[2]
-                                )
-
-                                for (let i = 2; i >= 0; i--) {
-                                    let leftTile =
-                                        this.tileGrid.getTileGrid()![tilePos2.y - i][tilePos2.x - 1]
-                                    let rightTile =
-                                        this.tileGrid.getTileGrid()![tilePos2.y - i][tilePos2.x + 1]
-
-                                    if (leftTile) {
-                                        leftTile?.explode3()
-                                        TilePool.getInstance(this).returnTile(leftTile)
-                                        this.tileGrid.getTileGrid()![tilePos2.y - i][
-                                            tilePos2.x - 1
-                                        ] = undefined
-                                    }
-
-                                    if (rightTile) {
-                                        rightTile?.explode3()
-                                        TilePool.getInstance(this).returnTile(rightTile)
-                                        this.tileGrid.getTileGrid()![tilePos2.y - i][
-                                            tilePos2.x + 1
-                                        ] = undefined
-                                    }
                                 }
                             }
                         }
-                        tile.explode3()
-                        TilePool.getInstance(this).returnTile(tile)
-                        this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
-                    } else if (tile.getIsCombine5()) {
-                        // check horizontal
-                        for (let i = tilePos.y - 1; i >= 0; i--) {
-                            let tileRemove = this.tileGrid.getTileGrid()![i][tilePos.x]
-                            tileRemove?.explode3()
-                            if (tileRemove) {
-                                TilePool.getInstance(this).returnTile(tileRemove)
-                                this.tileGrid.getTileGrid()![i][tilePos.x] = undefined
+                    }
+
+
+                } else {
+                    for (let k = 0; k < tempArr.length; k++) {
+                        if (tilePos.x !== -1 && tilePos.y !== -1 && tilePos.y !== 7) {
+                            let leftTile =
+                                this.tileGrid.getTileGrid()![tilePos.y + k][tilePos.x - 1]
+                            let tile = this.tileGrid.getTileGrid()![tilePos.y + k][tilePos.x]
+                            let rightTile =
+                                this.tileGrid.getTileGrid()![tilePos.y + k][tilePos.x + 1]
+
+                            if (leftTile) {
+                                leftTile.explode3()
+                                TilePool.getInstance(this).returnTile(leftTile)
+                                this.tileGrid.getTileGrid()![tilePos.y + k][tilePos.x - 1] =
+                                    undefined
+                            }
+
+                            if (tile) {
+                                tile.explode3()
+                                TilePool.getInstance(this).returnTile(tile)
+                                this.tileGrid.getTileGrid()![tilePos.y + k][tilePos.x] = undefined
+                            }
+
+                            if (rightTile) {
+                                rightTile.explode3()
+                                TilePool.getInstance(this).returnTile(rightTile)
+                                this.tileGrid.getTileGrid()![tilePos.y + k][tilePos.x + 1] =
+                                    undefined
                             }
                         }
+                    }
+                }
+            } else if (glow5) {
+                let tile = tempArr[positionGlow5]
 
-                        for (let i = tilePos.y + 1; i < CONST.gridRows; i++) {
-                            let tileRemove = this.tileGrid.getTileGrid()![i][tilePos.x]
-                            tileRemove?.explode3()
-                            if (tileRemove) {
-                                TilePool.getInstance(this).returnTile(tileRemove)
-                                this.tileGrid.getTileGrid()![i][tilePos.x] = undefined
-                            }
+                
+                console.log(tile)
+                let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
+                console.log("Glow5 Position:" + tilePos.x + " " + tilePos.y)
+
+                if(tilePos.x != -1 && tilePos.y != -1){
+
+                    for (let i = tilePos.y - 1; i >= 0; i--) {
+                        let tileRemove = this.tileGrid.getTileGrid()![i][tilePos.x]
+                        tileRemove?.explode3()
+                        if (tileRemove) {
+                            TilePool.getInstance(this).returnTile(tileRemove)
+                            this.tileGrid.getTileGrid()![i][tilePos.x] = undefined
                         }
-
-                        // check vertical
-
-                        for (let i = tilePos.x - 1; i >= 0; i--) {
-                            let tileRemove = this.tileGrid.getTileGrid()![tilePos.y][i]
-                            tileRemove?.explode3()
-                            if (tileRemove) {
-                                TilePool.getInstance(this).returnTile(tileRemove)
-                                this.tileGrid.getTileGrid()![tilePos.y][i] = undefined
-                            }
+                    }
+    
+                    for (let i = tilePos.y + 1; i < CONST.gridRows; i++) {
+                        let tileRemove = this.tileGrid.getTileGrid()![i][tilePos.x]
+                        tileRemove?.explode3()
+                        if (tileRemove) {
+                            TilePool.getInstance(this).returnTile(tileRemove)
+                            this.tileGrid.getTileGrid()![i][tilePos.x] = undefined
                         }
-
-                        for (let i = tilePos.x + 1; i < CONST.gridColumns; i++) {
-                            let tileRemove = this.tileGrid.getTileGrid()![tilePos.y][i]
-                            tileRemove?.explode3()
-                            if (tileRemove) {
-                                TilePool.getInstance(this).returnTile(tileRemove)
-                                this.tileGrid.getTileGrid()![tilePos.y][i] = undefined
-                            }
+                    }
+    
+                    // check vertical
+    
+                    for (let i = tilePos.x - 1; i >= 0; i--) {
+                        let tileRemove = this.tileGrid.getTileGrid()![tilePos.y][i]
+                        tileRemove?.explode3()
+                        if (tileRemove) {
+                            TilePool.getInstance(this).returnTile(tileRemove)
+                            this.tileGrid.getTileGrid()![tilePos.y][i] = undefined
                         }
+                    }
+    
+                    for (let i = tilePos.x + 1; i < CONST.gridColumns; i++) {
+                        let tileRemove = this.tileGrid.getTileGrid()![tilePos.y][i]
+                        tileRemove?.explode3()
+                        if (tileRemove) {
+                            TilePool.getInstance(this).returnTile(tileRemove)
+                            this.tileGrid.getTileGrid()![tilePos.y][i] = undefined
+                        }
+                    }
+    
+                    tile.disableCombine5()
+                    tile.explode3()
+                    TilePool.getInstance(this).returnTile(tile)
+                    this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
+                }
+            } else {
+                for (let j = 0; j < tempArr.length; j++) {
+                    let tile = tempArr[j]
+                    let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
 
-                        tile.disableCombine5()
-                        tile.explode3()
-                        TilePool.getInstance(this).returnTile(tile)
-                        this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
-                    } else {
+                    if (tilePos.x !== -1 && tilePos.y !== -1) {
                         tile.explode3()
                         TilePool.getInstance(this).returnTile(tile)
                         this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
                     }
                 }
             }
+
         }
         p0()
     }
