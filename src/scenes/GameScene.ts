@@ -177,9 +177,7 @@ export class GameScene extends Phaser.Scene {
         }
     }
 
-    private async combine(matches: any, p0: () => void): Promise<void> {
-        let hasTween = false
-
+    private async combine(matches: any): Promise<void> {
         for (var i = 0; i < matches.length; i++) {
             var tempArr = matches[i]
 
@@ -191,7 +189,6 @@ export class GameScene extends Phaser.Scene {
                     const tile = tempArr[j]
                     let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
 
-                    hasTween = true
                     this.add.tween({
                         targets: tile,
                         x: centerX,
@@ -202,7 +199,6 @@ export class GameScene extends Phaser.Scene {
                             TilePool.getInstance(this).returnTile(tile)
                             this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
                         },
-                        onCompleteParams: [tile],
                     })
                 }
                 tempArr[0].enableCombine4()
@@ -214,7 +210,6 @@ export class GameScene extends Phaser.Scene {
                     const tile = tempArr[j]
                     let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
 
-                    hasTween = true
                     this.add.tween({
                         targets: tile,
                         x: centerX,
@@ -228,38 +223,35 @@ export class GameScene extends Phaser.Scene {
                         onCompleteParams: [tile],
                     })
                 }
-                tempArr[0].enableCombine5()
             }
-        }
-
-        if (hasTween) {
-            // Delay the callback if there's a tween
-            this.time.delayedCall(220, p0, undefined, this)
-        } else {
-            // Call the callback immediately if no tween
-            p0()
         }
     }
 
-    private checkMatches(): void {
+    private async checkMatches(): Promise<void> {
         //Call the getMatches function to check for spots where there is
         //a run of three or more tiles in a row
         let matches = this.getMatches(this.tileGrid.getTileGrid()!)
 
         //If there are matches, remove them
         if (matches.length > 0) {
-            this.combine(matches, () => {
-                this.removeTileGroup(matches, () =>
-                    this.time.delayedCall(300, () => {
-                        this.resetTile(() => {
-                            this.time.delayedCall(320, () => {
-                                this.tileUp()
-                                this.checkMatches()
-                            })
-                        })
-                    })
-                )
-            })
+            // this.combine(matches, () => {
+            //     this.removeTileGroup(matches, () =>
+            //         this.time.delayedCall(300, () => {
+            //             this.resetTile(() => {
+            //                 this.time.delayedCall(300, () => {
+            //                     this.tileUp()
+            //                     this.checkMatches()
+            //                 })
+            //             })
+            //         })
+            //     )
+            // })
+
+            await this.combine(matches)
+            await this.removeTileGroup(matches)
+            await this.resetTile()
+            this.tileUp()
+            await this.checkMatches()
         } else {
             // No match so just swap the tiles back to their original position and reset
             this.swapTiles()
@@ -269,10 +261,11 @@ export class GameScene extends Phaser.Scene {
         }
 
         console.log(this.tileGrid.getTileGrid()!)
-    
     }
 
-    private async resetTile(p0: () => void): Promise<void> {
+    private async resetTile(): Promise<void> {
+        const tweenPromises: Promise<void>[] = []
+
         // Loop through each column starting from the bottom row
         for (let y = this.tileGrid.getTileGrid()!.length - 1; y > 0; y--) {
             // Loop through each tile in the column from right to left
@@ -286,16 +279,20 @@ export class GameScene extends Phaser.Scene {
                             this.tileGrid.getTileGrid()![y][x] = tempTile
                             this.tileGrid.getTileGrid()![k][x] = undefined
 
-                            this.add.tween({
-                                targets: tempTile,
-                                y: CONST.tileHeight * y + CONST.tileHeight / 2,
-                                ease: 'Bounce.easeOut',
-                                duration: 300,
-                                repeat: 0,
-                                yoyo: false,
-                                autoDestroy: true,
-                             
-                            })
+                            tweenPromises.push(
+                                new Promise<void>((resolve) => {
+                                    this.add.tween({
+                                        targets: tempTile,
+                                        y: CONST.tileHeight * y + CONST.tileHeight / 2,
+                                        ease: 'Bounce.easeOut',
+                                        duration: 300,
+                                        repeat: 0,
+                                        yoyo: false,
+                                        autoDestroy: true,
+                                        onComplete: () => resolve(),
+                                    })
+                                })
+                            )
 
                             foundTile = true
                             break
@@ -308,6 +305,11 @@ export class GameScene extends Phaser.Scene {
                 }
             }
         }
+
+        // Wait for all tile movement tweens to complete
+        await Promise.all(tweenPromises)
+
+        tweenPromises.length = 0 // Clear the promises array for the next batch
 
         // Iterate through each row of the grid from bottom to top
         for (let y = this.tileGrid.getTileGrid()!.length - 1; y >= 0; y--) {
@@ -324,15 +326,19 @@ export class GameScene extends Phaser.Scene {
                     )
 
                     // Animate the tile to move into its correct position
-                    this.add.tween({
-                        targets: tile,
-                        y: CONST.tileHeight * y + CONST.tileHeight / 2,
-                        ease: 'Bounce.easeOut',
-                        duration: 300,
-                        repeat: 0,
-                        yoyo: false,
-                        
-                    })
+                    tweenPromises.push(
+                        new Promise<void>((resolve) => {
+                            this.add.tween({
+                                targets: tile,
+                                y: CONST.tileHeight * y + CONST.tileHeight / 2,
+                                ease: 'Bounce.easeOut',
+                                duration: 300,
+                                repeat: 0,
+                                yoyo: false,
+                                onComplete: () => resolve(),
+                            })
+                        })
+                    )
 
                     // Update the grid with the new tile
                     this.tileGrid.getTileGrid()![y][x] = tile
@@ -340,7 +346,8 @@ export class GameScene extends Phaser.Scene {
             }
         }
 
-        p0()
+        // Wait for all new tile tweens to complete
+        await Promise.all(tweenPromises)
     }
 
     private tileUp(): void {
@@ -349,10 +356,10 @@ export class GameScene extends Phaser.Scene {
         this.secondSelectedTile = undefined
     }
 
-    private removeTileGroup(matches: any, p0: () => void): void {
+    private async removeTileGroup(matches: any): Promise<void> {
         // Loop through all the matches and remove the associated tiles
 
-        // fitter only for matches of 3
+        // filter only for matches of 3
         matches = matches.filter((match: any) => match.length === 3)
 
         for (var i = 0; i < matches.length; i++) {
@@ -391,9 +398,17 @@ export class GameScene extends Phaser.Scene {
 
                 if (horizontal) {
                     let tile = tempArr[positionGlow4]
-                    tile.disableCombine4()
+                    await new Promise<void>((resolve) => {
+                        tile.disableCombine4()
+                        resolve()
+                    })
                     for (let k = 0; k < tempArr.length; k++) {
-                        if (tilePos.y != 0 && tilePos.x !== -1 && tilePos.y !== -1 && tilePos.y != 7) {
+                        if (
+                            tilePos.y != 0 &&
+                            tilePos.x !== -1 &&
+                            tilePos.y !== -1 &&
+                            tilePos.y != 7
+                        ) {
                             let aboveTile =
                                 this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x + k]
                             let tile = this.tileGrid.getTileGrid()![tilePos.y][tilePos.x + k]
@@ -401,23 +416,33 @@ export class GameScene extends Phaser.Scene {
                                 this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + k]
 
                             if (aboveTile) {
-                                aboveTile.explode3()
-                                TilePool.getInstance(this).returnTile(aboveTile)
-                                this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x + k] =
-                                    undefined
+                                await new Promise<void>((resolve) => {
+                                    aboveTile.explode3()
+                                    TilePool.getInstance(this).returnTile(aboveTile)
+                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x + k] =
+                                        undefined
+                                    resolve()
+                                })
                             }
 
                             if (tile) {
-                                tile.explode3()
-                                TilePool.getInstance(this).returnTile(tile)
-                                this.tileGrid.getTileGrid()![tilePos.y][tilePos.x + k] = undefined
+                                await new Promise<void>((resolve) => {
+                                    tile.explode3()
+                                    TilePool.getInstance(this).returnTile(tile)
+                                    this.tileGrid.getTileGrid()![tilePos.y][tilePos.x + k] =
+                                        undefined
+                                    resolve()
+                                })
                             }
 
                             if (belowTile) {
-                                belowTile.explode3()
-                                TilePool.getInstance(this).returnTile(belowTile)
-                                this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + k] =
-                                    undefined
+                                await new Promise<void>((resolve) => {
+                                    belowTile.explode3()
+                                    TilePool.getInstance(this).returnTile(belowTile)
+                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + k] =
+                                        undefined
+                                    resolve()
+                                })
                             }
                         } else {
                             if (tilePos.x !== -1 && tilePos.y !== -1 && tilePos.y != 7) {
@@ -428,30 +453,37 @@ export class GameScene extends Phaser.Scene {
                                     this.tileGrid.getTileGrid()![tilePos.y + 2][tilePos.x + k]
 
                                 if (tile) {
-                                    tile.explode3()
-                                    TilePool.getInstance(this).returnTile(tile)
-                                    this.tileGrid.getTileGrid()![tilePos.y][tilePos.x + k] =
-                                        undefined
+                                    await new Promise<void>((resolve) => {
+                                        tile.explode3()
+                                        TilePool.getInstance(this).returnTile(tile)
+                                        this.tileGrid.getTileGrid()![tilePos.y][tilePos.x + k] =
+                                            undefined
+                                        resolve()
+                                    })
                                 }
 
                                 if (belowTile) {
-                                    belowTile.explode3()
-                                    TilePool.getInstance(this).returnTile(belowTile)
-                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + k] =
-                                        undefined
+                                    await new Promise<void>((resolve) => {
+                                        belowTile.explode3()
+                                        TilePool.getInstance(this).returnTile(belowTile)
+                                        this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + k] =
+                                            undefined
+                                        resolve()
+                                    })
                                 }
 
                                 if (belowTile1) {
-                                    belowTile1.explode3()
-                                    TilePool.getInstance(this).returnTile(belowTile1)
-                                    this.tileGrid.getTileGrid()![tilePos.y + 2][tilePos.x + k] =
-                                        undefined
+                                    await new Promise<void>((resolve) => {
+                                        belowTile1.explode3()
+                                        TilePool.getInstance(this).returnTile(belowTile1)
+                                        this.tileGrid.getTileGrid()![tilePos.y + 2][tilePos.x + k] =
+                                            undefined
+                                        resolve()
+                                    })
                                 }
                             }
                         }
                     }
-
-
                 } else {
                     for (let k = 0; k < tempArr.length; k++) {
                         if (tilePos.x !== -1 && tilePos.y !== -1 && tilePos.y !== 7) {
@@ -462,23 +494,33 @@ export class GameScene extends Phaser.Scene {
                                 this.tileGrid.getTileGrid()![tilePos.y + k][tilePos.x + 1]
 
                             if (leftTile) {
-                                leftTile.explode3()
-                                TilePool.getInstance(this).returnTile(leftTile)
-                                this.tileGrid.getTileGrid()![tilePos.y + k][tilePos.x - 1] =
-                                    undefined
+                                await new Promise<void>((resolve) => {
+                                    leftTile.explode3()
+                                    TilePool.getInstance(this).returnTile(leftTile)
+                                    this.tileGrid.getTileGrid()![tilePos.y + k][tilePos.x - 1] =
+                                        undefined
+                                    resolve()
+                                })
                             }
 
                             if (tile) {
-                                tile.explode3()
-                                TilePool.getInstance(this).returnTile(tile)
-                                this.tileGrid.getTileGrid()![tilePos.y + k][tilePos.x] = undefined
+                                await new Promise<void>((resolve) => {
+                                    tile.explode3()
+                                    TilePool.getInstance(this).returnTile(tile)
+                                    this.tileGrid.getTileGrid()![tilePos.y + k][tilePos.x] =
+                                        undefined
+                                    resolve()
+                                })
                             }
 
                             if (rightTile) {
-                                rightTile.explode3()
-                                TilePool.getInstance(this).returnTile(rightTile)
-                                this.tileGrid.getTileGrid()![tilePos.y + k][tilePos.x + 1] =
-                                    undefined
+                                await new Promise<void>((resolve) => {
+                                    rightTile.explode3()
+                                    TilePool.getInstance(this).returnTile(rightTile)
+                                    this.tileGrid.getTileGrid()![tilePos.y + k][tilePos.x + 1] =
+                                        undefined
+                                    resolve()
+                                })
                             }
                         }
                     }
@@ -486,55 +528,70 @@ export class GameScene extends Phaser.Scene {
             } else if (glow5) {
                 let tile = tempArr[positionGlow5]
 
-                
                 console.log(tile)
                 let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
-                console.log("Glow5 Position:" + tilePos.x + " " + tilePos.y)
+                console.log('Glow5 Position:' + tilePos.x + ' ' + tilePos.y)
 
-                if(tilePos.x != -1 && tilePos.y != -1){
-
+                if (tilePos.x != -1 && tilePos.y != -1) {
                     for (let i = tilePos.y - 1; i >= 0; i--) {
                         let tileRemove = this.tileGrid.getTileGrid()![i][tilePos.x]
-                        tileRemove?.explode3()
                         if (tileRemove) {
-                            TilePool.getInstance(this).returnTile(tileRemove)
-                            this.tileGrid.getTileGrid()![i][tilePos.x] = undefined
+                            await new Promise<void>((resolve) => {
+                                tileRemove.explode3()
+                                TilePool.getInstance(this).returnTile(tileRemove)
+                                this.tileGrid.getTileGrid()![i][tilePos.x] = undefined
+                                resolve()
+                            })
                         }
                     }
-    
+
                     for (let i = tilePos.y + 1; i < CONST.gridRows; i++) {
                         let tileRemove = this.tileGrid.getTileGrid()![i][tilePos.x]
-                        tileRemove?.explode3()
                         if (tileRemove) {
-                            TilePool.getInstance(this).returnTile(tileRemove)
-                            this.tileGrid.getTileGrid()![i][tilePos.x] = undefined
+                            await new Promise<void>((resolve) => {
+                                tileRemove.explode3()
+                                TilePool.getInstance(this).returnTile(tileRemove)
+                                this.tileGrid.getTileGrid()![i][tilePos.x] = undefined
+                                resolve()
+                            })
                         }
                     }
-    
+
                     // check vertical
-    
                     for (let i = tilePos.x - 1; i >= 0; i--) {
                         let tileRemove = this.tileGrid.getTileGrid()![tilePos.y][i]
-                        tileRemove?.explode3()
                         if (tileRemove) {
-                            TilePool.getInstance(this).returnTile(tileRemove)
-                            this.tileGrid.getTileGrid()![tilePos.y][i] = undefined
+                            await new Promise<void>((resolve) => {
+                                tileRemove.explode3()
+                                TilePool.getInstance(this).returnTile(tileRemove)
+                                this.tileGrid.getTileGrid()![tilePos.y][i] = undefined
+                                resolve()
+                            })
                         }
                     }
-    
+
                     for (let i = tilePos.x + 1; i < CONST.gridColumns; i++) {
                         let tileRemove = this.tileGrid.getTileGrid()![tilePos.y][i]
-                        tileRemove?.explode3()
                         if (tileRemove) {
-                            TilePool.getInstance(this).returnTile(tileRemove)
-                            this.tileGrid.getTileGrid()![tilePos.y][i] = undefined
+                            await new Promise<void>((resolve) => {
+                                tileRemove.explode3()
+                                TilePool.getInstance(this).returnTile(tileRemove)
+                                this.tileGrid.getTileGrid()![tilePos.y][i] = undefined
+                                resolve()
+                            })
                         }
                     }
-    
-                    tile.disableCombine5()
-                    tile.explode3()
-                    TilePool.getInstance(this).returnTile(tile)
-                    this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
+
+                    await new Promise<void>((resolve) => {
+                        tile.disableCombine5()
+                        resolve()
+                    })
+                    await new Promise<void>((resolve) => {
+                        tile.explode3()
+                        TilePool.getInstance(this).returnTile(tile)
+                        this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
+                        resolve()
+                    })
                 }
             } else {
                 for (let j = 0; j < tempArr.length; j++) {
@@ -542,15 +599,16 @@ export class GameScene extends Phaser.Scene {
                     let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
 
                     if (tilePos.x !== -1 && tilePos.y !== -1) {
-                        tile.explode3()
-                        TilePool.getInstance(this).returnTile(tile)
-                        this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
+                        await new Promise<void>((resolve) => {
+                            tile.explode3()
+                            TilePool.getInstance(this).returnTile(tile)
+                            this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
+                            resolve()
+                        })
                     }
                 }
             }
-
         }
-        p0()
     }
 
     private getTilePos(tileGrid: (Tile | undefined)[][], tile: Tile): any {
