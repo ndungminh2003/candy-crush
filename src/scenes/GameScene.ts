@@ -66,7 +66,6 @@ export class GameScene extends Phaser.Scene {
         this.tileGrid.stopIdleAnimation()
     }
 
-
     /**
      * This function gets called, as soon as a tile has been pressed or clicked.
      * It will check, if a move can be done at first.
@@ -185,7 +184,7 @@ export class GameScene extends Phaser.Scene {
         for (var i = 0; i < matches.length; i++) {
             var tempArr = matches[i]
 
-            if (tempArr.length === 4 || tempArr.length === 5) {
+            if (tempArr.length === 4) {
                 const centerX = tempArr[0].x
                 const centerY = tempArr[0].y
 
@@ -203,18 +202,40 @@ export class GameScene extends Phaser.Scene {
                         onComplete: () => {
                             TilePool.getInstance(this).returnTile(tile)
                             this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
-                            this.removeTileGroup()
                         },
                         onCompleteParams: [tile],
                     })
                 }
                 tempArr[0].enableCombine4()
+            } else if (tempArr.length >= 5) {
+                const centerX = tempArr[0].x
+                const centerY = tempArr[0].y
+
+                for (let j = 1; j < tempArr.length; j++) {
+                    const tile = tempArr[j]
+                    let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
+
+                    hasTween = true
+                    this.add.tween({
+                        targets: tile,
+                        x: centerX,
+                        y: centerY,
+                        ease: 'Linear',
+                        duration: 200,
+                        onComplete: () => {
+                            TilePool.getInstance(this).returnTile(tile)
+                            this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
+                        },
+                        onCompleteParams: [tile],
+                    })
+                }
+                tempArr[0].enableCombine5()
             }
         }
 
         if (hasTween) {
             // Delay the callback if there's a tween
-            this.time.delayedCall(300, p0, undefined, this)
+            this.time.delayedCall(220, p0, undefined, this)
         } else {
             // Call the callback immediately if no tween
             p0()
@@ -228,22 +249,18 @@ export class GameScene extends Phaser.Scene {
 
         //If there are matches, remove them
         if (matches.length > 0) {
-            // this.combine(matches, () => {
-            //     this.removeTileGroup(matches, () =>
-            //         this.time.delayedCall(350, () => {
-            //             this.resetTile(() => {
-            //                 this.time.delayedCall(350, () => {
-            //                     this.tileUp()
-            //                     this.checkMatches()
-            //                 })
-            //             })
-            //         })
-            //     )
-            // })
-
-
-
-
+            this.combine(matches, () => {
+                this.removeTileGroup(matches, () =>
+                    this.time.delayedCall(300, () => {
+                        this.resetTile(() => {
+                            this.time.delayedCall(320, () => {
+                                this.tileUp()
+                                this.checkMatches()
+                            })
+                        })
+                    })
+                )
+            })
         } else {
             // No match so just swap the tiles back to their original position and reset
             this.swapTiles()
@@ -252,7 +269,6 @@ export class GameScene extends Phaser.Scene {
             this.canMove = true
         }
     }
-
 
     private async resetTile(p0: () => void): Promise<void> {
         // Loop through each column starting from the bottom row
@@ -345,9 +361,301 @@ export class GameScene extends Phaser.Scene {
 
                 // Remove the tile from the theoretical grid
                 if (tilePos.x !== -1 && tilePos.y !== -1) {
-                    tile.explode3()
-                    TilePool.getInstance(this).returnTile(tile)
-                    this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
+                    if (tile.getIsCombine4()) {
+                        console.log('at remove 4: ' + tilePos.x, tilePos.y)
+
+                        let horizontal = false
+
+                        for (let k = 0; k < tempArr.length; k++) {
+                            if (tempArr[k].x !== tile.x) {
+                                horizontal = true
+                                break
+                            }
+                        }
+
+                        if (horizontal) {
+                            if (j === 0) {
+                                let tilePos0 = this.getTilePos(
+                                    this.tileGrid.getTileGrid()!,
+                                    tempArr[0]
+                                )
+
+                                for (let i = 0; i < 3; i++) {
+                                    let aboveTile =
+                                        this.tileGrid.getTileGrid()![tilePos0.y - 1][tilePos0.x + i]
+
+                                    let downTile =
+                                        this.tileGrid.getTileGrid()![tilePos0.y + 1][tilePos0.x + i]
+
+                                    if (aboveTile) {
+                                        aboveTile?.explode3()
+                                        TilePool.getInstance(this).returnTile(aboveTile)
+                                        this.tileGrid.getTileGrid()![tilePos0.y - 1][
+                                            tilePos0.x + i
+                                        ] = undefined
+                                    }
+
+                                    if (downTile) {
+                                        downTile?.explode3()
+                                        TilePool.getInstance(this).returnTile(downTile)
+                                        this.tileGrid.getTileGrid()![tilePos0.y + 1][
+                                            tilePos0.x + i
+                                        ] = undefined
+                                    }
+                                }
+                            } else if (j === 1) {
+                                let tileAbove0 =
+                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x - 1]
+                                let tileAbove1 =
+                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x]
+                                let tileAbove2 =
+                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x + 1]
+                                let tileDown0 =
+                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x - 1]
+                                let tileDown1 =
+                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x]
+                                let tileDown2 =
+                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + 1]
+
+                                if (tileAbove0) {
+                                    tileAbove0.explode3()
+                                    TilePool.getInstance(this).returnTile(tileAbove0)
+                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x - 1] =
+                                        undefined
+                                }
+
+                                if (tileAbove1) {
+                                    tileAbove1.explode3()
+                                    TilePool.getInstance(this).returnTile(tileAbove1)
+                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x] =
+                                        undefined
+                                }
+
+                                if (tileAbove2) {
+                                    tileAbove2.explode3()
+                                    TilePool.getInstance(this).returnTile(tileAbove2)
+                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x + 1] =
+                                        undefined
+                                }
+
+                                if (tileDown0) {
+                                    tileDown0.explode3()
+                                    TilePool.getInstance(this).returnTile(tileDown0)
+                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x - 1] =
+                                        undefined
+                                }
+
+                                if (tileDown1) {
+                                    tileDown1.explode3()
+                                    TilePool.getInstance(this).returnTile(tileDown1)
+                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x] =
+                                        undefined
+                                }
+
+                                if (tileDown2) {
+                                    tileDown2.explode3()
+                                    TilePool.getInstance(this).returnTile(tileDown2)
+                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + 1] =
+                                        undefined
+                                }
+                            } else {
+                                let tilePos2 = this.getTilePos(
+                                    this.tileGrid.getTileGrid()!,
+                                    tempArr[2]
+                                )
+
+                                for (let i = 2; i >= 0; i--) {
+                                    let aboveTile =
+                                        this.tileGrid.getTileGrid()![tilePos2.y - 1][tilePos2.x - i]
+
+                                    let downTile =
+                                        this.tileGrid.getTileGrid()![tilePos2.y + 1][tilePos2.x - i]
+
+                                    if (aboveTile) {
+                                        aboveTile?.explode3()
+                                        TilePool.getInstance(this).returnTile(aboveTile)
+                                        this.tileGrid.getTileGrid()![tilePos2.y - 1][
+                                            tilePos2.x - i
+                                        ] = undefined
+                                    }
+
+                                    if (downTile) {
+                                        downTile?.explode3()
+                                        TilePool.getInstance(this).returnTile(downTile)
+                                        this.tileGrid.getTileGrid()![tilePos2.y + 1][
+                                            tilePos2.x - i
+                                        ] = undefined
+                                    }
+                                }
+                            }
+
+                            tile.disableCombine4()
+                        } else {
+                            if (j === 0) {
+                                let tilePos0 = this.getTilePos(
+                                    this.tileGrid.getTileGrid()!,
+                                    tempArr[0]
+                                )
+
+                                for (let i = 0; i < 3; i++) {
+                                    let leftTile =
+                                        this.tileGrid.getTileGrid()![tilePos0.y + i][tilePos0.x - 1]
+                                    let rightTile =
+                                        this.tileGrid.getTileGrid()![tilePos0.y + i][tilePos0.x + 1]
+
+                                    if (leftTile) {
+                                        leftTile?.explode3()
+                                        TilePool.getInstance(this).returnTile(leftTile)
+                                        this.tileGrid.getTileGrid()![tilePos0.y + i][
+                                            tilePos0.x - 1
+                                        ] = undefined
+                                    }
+
+                                    if (rightTile) {
+                                        rightTile?.explode3()
+                                        TilePool.getInstance(this).returnTile(rightTile)
+                                        this.tileGrid.getTileGrid()![tilePos0.y + i][
+                                            tilePos0.x + 1
+                                        ] = undefined
+                                    }
+                                }
+                            } else if (j === 1) {
+                                let tileLeft0 =
+                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x - 1]
+                                let tileLeft1 =
+                                    this.tileGrid.getTileGrid()![tilePos.y][tilePos.x - 1]
+                                let tileLeft2 =
+                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x - 1]
+                                let tileRight0 =
+                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x + 1]
+                                let tileRight1 =
+                                    this.tileGrid.getTileGrid()![tilePos.y][tilePos.x + 1]
+                                let tileRight2 =
+                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + 1]
+
+                                if (tileLeft0) {
+                                    tileLeft0.explode3()
+                                    TilePool.getInstance(this).returnTile(tileLeft0)
+                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x - 1] =
+                                        undefined
+                                }
+
+                                if (tileLeft1) {
+                                    tileLeft1.explode3()
+                                    TilePool.getInstance(this).returnTile(tileLeft1)
+                                    this.tileGrid.getTileGrid()![tilePos.y][tilePos.x - 1] =
+                                        undefined
+                                }
+
+                                if (tileLeft2) {
+                                    tileLeft2.explode3()
+                                    TilePool.getInstance(this).returnTile(tileLeft2)
+                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x - 1] =
+                                        undefined
+                                }
+
+                                if (tileRight0) {
+                                    tileRight0.explode3()
+                                    TilePool.getInstance(this).returnTile(tileRight0)
+                                    this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x + 1] =
+                                        undefined
+                                }
+
+                                if (tileRight1) {
+                                    tileRight1.explode3()
+                                    TilePool.getInstance(this).returnTile(tileRight1)
+                                    this.tileGrid.getTileGrid()![tilePos.y][tilePos.x + 1] =
+                                        undefined
+                                }
+
+                                if (tileRight2) {
+                                    tileRight2.explode3()
+                                    TilePool.getInstance(this).returnTile(tileRight2)
+                                    this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + 1] =
+                                        undefined
+                                }
+                            } else {
+                                let tilePos2 = this.getTilePos(
+                                    this.tileGrid.getTileGrid()!,
+                                    tempArr[2]
+                                )
+
+                                for (let i = 2; i >= 0; i--) {
+                                    let leftTile =
+                                        this.tileGrid.getTileGrid()![tilePos2.y - i][tilePos2.x - 1]
+                                    let rightTile =
+                                        this.tileGrid.getTileGrid()![tilePos2.y - i][tilePos2.x + 1]
+
+                                    if (leftTile) {
+                                        leftTile?.explode3()
+                                        TilePool.getInstance(this).returnTile(leftTile)
+                                        this.tileGrid.getTileGrid()![tilePos2.y - i][
+                                            tilePos2.x - 1
+                                        ] = undefined
+                                    }
+
+                                    if (rightTile) {
+                                        rightTile?.explode3()
+                                        TilePool.getInstance(this).returnTile(rightTile)
+                                        this.tileGrid.getTileGrid()![tilePos2.y - i][
+                                            tilePos2.x + 1
+                                        ] = undefined
+                                    }
+                                }
+                            }
+                        }
+                        tile.explode3()
+                        TilePool.getInstance(this).returnTile(tile)
+                        this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
+                    } else if (tile.getIsCombine5()) {
+                        // check horizontal
+                        for (let i = tilePos.y - 1; i >= 0; i--) {
+                            let tileRemove = this.tileGrid.getTileGrid()![i][tilePos.x]
+                            tileRemove?.explode3()
+                            if (tileRemove) {
+                                TilePool.getInstance(this).returnTile(tileRemove)
+                                this.tileGrid.getTileGrid()![i][tilePos.x] = undefined
+                            }
+                        }
+
+                        for (let i = tilePos.y + 1; i < CONST.gridRows; i++) {
+                            let tileRemove = this.tileGrid.getTileGrid()![i][tilePos.x]
+                            tileRemove?.explode3()
+                            if (tileRemove) {
+                                TilePool.getInstance(this).returnTile(tileRemove)
+                                this.tileGrid.getTileGrid()![i][tilePos.x] = undefined
+                            }
+                        }
+
+                        // check vertical
+
+                        for (let i = tilePos.x - 1; i >= 0; i--) {
+                            let tileRemove = this.tileGrid.getTileGrid()![tilePos.y][i]
+                            tileRemove?.explode3()
+                            if (tileRemove) {
+                                TilePool.getInstance(this).returnTile(tileRemove)
+                                this.tileGrid.getTileGrid()![tilePos.y][i] = undefined
+                            }
+                        }
+
+                        for (let i = tilePos.x + 1; i < CONST.gridColumns; i++) {
+                            let tileRemove = this.tileGrid.getTileGrid()![tilePos.y][i]
+                            tileRemove?.explode3()
+                            if (tileRemove) {
+                                TilePool.getInstance(this).returnTile(tileRemove)
+                                this.tileGrid.getTileGrid()![tilePos.y][i] = undefined
+                            }
+                        }
+
+                        tile.disableCombine5()
+                        tile.explode3()
+                        TilePool.getInstance(this).returnTile(tile)
+                        this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
+                    } else {
+                        tile.explode3()
+                        TilePool.getInstance(this).returnTile(tile)
+                        this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
+                    }
                 }
             }
         }

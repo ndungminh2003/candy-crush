@@ -24,9 +24,8 @@ export class TilePool {
 
     public getTile(x: number, y: number): Tile {
 
-        console.log(this.pool.length)
         if (this.pool.length > 0) {
-            console.log('pooled tile')
+        
             let tile = this.pool.pop() as Tile
             tile.setVisible(true)
             tile.setTexture(
@@ -36,11 +35,9 @@ export class TilePool {
                 x * CONST.tileWidth + CONST.tileWidth / 2,
                 y * CONST.tileHeight + CONST.tileHeight / 2
             )
-            console.log(tile)
             return tile
         }
 
-        console.log('new tile')
         let randomTileType: string =
             CONST.candyTypes[Phaser.Math.RND.between(0, CONST.candyTypes.length - 1)]
 
