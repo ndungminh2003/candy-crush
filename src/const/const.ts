@@ -8,8 +8,8 @@ export let CONST = {
     candyTypes: [
         'cookie1',
         'cookie2',
-        // 'croissant',
-        // 'cupcake',
+        'croissant',
+        'cupcake',
         // 'donut',
         // 'eclair',
         // 'macaroon',
