@@ -186,67 +186,65 @@ export class GameScene extends Phaser.Scene {
     }
 
     private mergeMatch(matches: any, p0: () => void): void {
-        // let hasTween = false
+        let hasTween = false
 
-        // for (var i = 0; i < matches.length; i++) {
-        //     var tempArr = matches[i]
+        for (var i = 0; i < matches.length; i++) {
+            var tempArr = matches[i]
 
-        //     if (tempArr.length === 4) {
-        //         const centerX = tempArr[0].x
-        //         const centerY = tempArr[0].y
+            if (tempArr.length === 4) {
+                const posX = tempArr[2].x
+                const posY = tempArr[2].y
 
-        //         for (let j = 1; j < tempArr.length; j++) {
-        //             const tile = tempArr[j]
-        //             let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
+                for (let j = 1; j < tempArr.length; j++) {
+                    const tile = tempArr[j]
+                    let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
 
-        //             hasTween = true
-        //             this.add.tween({
-        //                 targets: tile,
-        //                 x: centerX,
-        //                 y: centerY,
-        //                 ease: 'Linear',
-        //                 duration: 200,
-        //                 onComplete: () => {
-        //                     TilePool.getInstance(this).returnTile(tile)
-        //                     this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
-        //                 },
-        //             })
-        //         }
-        //         tempArr[0].enableCombine4()
-        //     } else if (tempArr.length >= 5) {
-        //         const centerX = tempArr[0].x
-        //         const centerY = tempArr[0].y
+                    hasTween = true
+                    this.add.tween({
+                        targets: tile,
+                        x: posX,
+                        y: posY,
+                        ease: 'Linear',
+                        duration: 200,
+                        onComplete: () => {
+                            TilePool.getInstance(this).returnTile(tile)
+                            this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
+                        },
+                    })
+                }
+                tempArr[2].enableCombine4()
+            } else if (tempArr.length >= 5) {
+                const posX = tempArr[0].x
+                const posY = tempArr[0].y
 
-        //         for (let j = 1; j < tempArr.length; j++) {
-        //             const tile = tempArr[j]
-        //             let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
+                for (let j = 1; j < tempArr.length; j++) {
+                    const tile = tempArr[j]
+                    let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
 
-        //             hasTween = true
-        //             this.add.tween({
-        //                 targets: tile,
-        //                 x: centerX,
-        //                 y: centerY,
-        //                 ease: 'Linear',
-        //                 duration: 200,
-        //                 onComplete: () => {
-        //                     TilePool.getInstance(this).returnTile(tile)
-        //                     this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
-        //                 },
-        //             })
-        //         }
-        //         tempArr[0].enableCombine5()
-        //     }
-        // }
+                    hasTween = true
+                    this.add.tween({
+                        targets: tile,
+                        x: posX,
+                        y: posY,
+                        ease: 'Linear',
+                        duration: 200,
+                        onComplete: () => {
+                            TilePool.getInstance(this).returnTile(tile)
+                            this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
+                        },
+                    })
+                }
+                tempArr[0].enableCombine5()
+            }
+        }
 
-        // if (hasTween) {
-        //     // Delay the callback if there's a tween
-        //     this.time.delayedCall(200, p0, undefined, this)
-        // } else {
-        //     // Call the callback immediately if no tween
-        //     p0()
-        // }
-
-        p0()
+        if (hasTween) {
+            // Delay the callback if there's a tween
+            this.time.delayedCall(200, p0, undefined, this)
+        } else {
+            // Call the callback immediately if no tween
+            p0()
+        }
     }
 
     private checkMatches(): void {
@@ -355,194 +353,12 @@ export class GameScene extends Phaser.Scene {
     }
 
     private removeTileGroup(matches: any, p0: () => void): void {
-        // Loop through all the matches and remove the associated tiles
-
         // get only match3 in matches
-        // let match3 = matches.filter((match: any) => match.length === 3)
+        let match3 = matches.filter((match: any) => match.length === 3)
 
-        for (var i = 0; i < matches.length; i++) {
-            var tempArr = matches[i]
+        for (var i = 0; i < match3.length; i++) {
+            var tempArr = match3[i]
 
-            // let glow4 = false
-            // let glow5 = false
-            // let positionGlow4 = -1
-            // let positionGlow5 = -1
-            // let horizontal = false
-
-            // for (let k = 0; k < tempArr.length - 1; k++) {
-            //     if (tempArr[k].x !== tempArr[k + 1].x) {
-            //         horizontal = true
-            //         break
-            //     }
-            // }
-
-            // for (let j = 0; j < tempArr.length; j++) {
-            //     if (tempArr[j].getIsCombine4()) {
-            //         positionGlow4 = j
-            //         glow4 = true
-            //         break
-            //     }
-            //     if (tempArr[j].getIsCombine5()) {
-            //         glow5 = true
-            //         positionGlow5 = j
-            //         break
-            //     }
-            // }
-
-            // if (glow4) {
-            //     let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tempArr[0])
-
-            //     console.log(tilePos)
-
-            //     if (horizontal) {
-            //         let tile = tempArr[positionGlow4]
-            //         tile.disableCombine4()
-            //         for (let k = 0; k < tempArr.length; k++) {
-            //             if (
-            //                 tilePos.y != 0 &&
-            //                 tilePos.x !== -1 &&
-            //                 tilePos.y !== -1 &&
-            //                 tilePos.y != 7
-            //             ) {
-            //                 let aboveTile =
-            //                     this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x + k]
-            //                 let tile = this.tileGrid.getTileGrid()![tilePos.y][tilePos.x + k]
-            //                 let belowTile =
-            //                     this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + k]
-
-            //                 if (aboveTile) {
-            //                     aboveTile.explode3()
-            //                     TilePool.getInstance(this).returnTile(aboveTile)
-            //                     this.tileGrid.getTileGrid()![tilePos.y - 1][tilePos.x + k] =
-            //                         undefined
-            //                 }
-
-            //                 if (tile) {
-            //                     tile.explode3()
-            //                     TilePool.getInstance(this).returnTile(tile)
-            //                     this.tileGrid.getTileGrid()![tilePos.y][tilePos.x + k] = undefined
-            //                 }
-
-            //                 if (belowTile) {
-            //                     belowTile.explode3()
-            //                     TilePool.getInstance(this).returnTile(belowTile)
-            //                     this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + k] =
-            //                         undefined
-            //                 }
-            //             } else {
-            //                 if (tilePos.x !== -1 && tilePos.y !== -1 && tilePos.y != 7) {
-            //                     let tile = this.tileGrid.getTileGrid()![tilePos.y][tilePos.x + k]
-            //                     let belowTile =
-            //                         this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + k]
-            //                     let belowTile1 =
-            //                         this.tileGrid.getTileGrid()![tilePos.y + 2][tilePos.x + k]
-
-            //                     if (tile) {
-            //                         tile.explode3()
-            //                         TilePool.getInstance(this).returnTile(tile)
-            //                         this.tileGrid.getTileGrid()![tilePos.y][tilePos.x + k] =
-            //                             undefined
-            //                     }
-
-            //                     if (belowTile) {
-            //                         belowTile.explode3()
-            //                         TilePool.getInstance(this).returnTile(belowTile)
-            //                         this.tileGrid.getTileGrid()![tilePos.y + 1][tilePos.x + k] =
-            //                             undefined
-            //                     }
-
-            //                     if (belowTile1) {
-            //                         belowTile1.explode3()
-            //                         TilePool.getInstance(this).returnTile(belowTile1)
-            //                         this.tileGrid.getTileGrid()![tilePos.y + 2][tilePos.x + k] =
-            //                             undefined
-            //                     }
-            //                 }
-            //             }
-            //         }
-            //     } else {
-            //         for (let k = 0; k < tempArr.length; k++) {
-            //             if (tilePos.x !== -1 && tilePos.y !== -1 && tilePos.y !== 7) {
-            //                 let leftTile =
-            //                     this.tileGrid.getTileGrid()![tilePos.y + k][tilePos.x - 1]
-            //                 let tile = this.tileGrid.getTileGrid()![tilePos.y + k][tilePos.x]
-            //                 let rightTile =
-            //                     this.tileGrid.getTileGrid()![tilePos.y + k][tilePos.x + 1]
-
-            //                 if (leftTile) {
-            //                     leftTile.explode3()
-            //                     TilePool.getInstance(this).returnTile(leftTile)
-            //                     this.tileGrid.getTileGrid()![tilePos.y + k][tilePos.x - 1] =
-            //                         undefined
-            //                 }
-
-            //                 if (tile) {
-            //                     tile.explode3()
-            //                     TilePool.getInstance(this).returnTile(tile)
-            //                     this.tileGrid.getTileGrid()![tilePos.y + k][tilePos.x] = undefined
-            //                 }
-
-            //                 if (rightTile) {
-            //                     rightTile.explode3()
-            //                     TilePool.getInstance(this).returnTile(rightTile)
-            //                     this.tileGrid.getTileGrid()![tilePos.y + k][tilePos.x + 1] =
-            //                         undefined
-            //                 }
-            //             }
-            //         }
-            //     }
-            // } else if (glow5) {
-            //     let tile = tempArr[positionGlow5]
-
-            //     console.log(tile)
-            //     let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
-            //     console.log('Glow5 Position:' + tilePos.x + ' ' + tilePos.y)
-
-            //     if (tilePos.x != -1 && tilePos.y != -1) {
-            //         for (let i = tilePos.y - 1; i >= 0; i--) {
-            //             let tileRemove = this.tileGrid.getTileGrid()![i][tilePos.x]
-            //             tileRemove?.explode3()
-            //             if (tileRemove) {
-            //                 TilePool.getInstance(this).returnTile(tileRemove)
-            //                 this.tileGrid.getTileGrid()![i][tilePos.x] = undefined
-            //             }
-            //         }
-
-            //         for (let i = tilePos.y + 1; i < CONST.gridRows; i++) {
-            //             let tileRemove = this.tileGrid.getTileGrid()![i][tilePos.x]
-            //             tileRemove?.explode3()
-            //             if (tileRemove) {
-            //                 TilePool.getInstance(this).returnTile(tileRemove)
-            //                 this.tileGrid.getTileGrid()![i][tilePos.x] = undefined
-            //             }
-            //         }
-
-            //         // check vertical
-
-            //         for (let i = tilePos.x - 1; i >= 0; i--) {
-            //             let tileRemove = this.tileGrid.getTileGrid()![tilePos.y][i]
-            //             tileRemove?.explode3()
-            //             if (tileRemove) {
-            //                 TilePool.getInstance(this).returnTile(tileRemove)
-            //                 this.tileGrid.getTileGrid()![tilePos.y][i] = undefined
-            //             }
-            //         }
-
-            //         for (let i = tilePos.x + 1; i < CONST.gridColumns; i++) {
-            //             let tileRemove = this.tileGrid.getTileGrid()![tilePos.y][i]
-            //             tileRemove?.explode3()
-            //             if (tileRemove) {
-            //                 TilePool.getInstance(this).returnTile(tileRemove)
-            //                 this.tileGrid.getTileGrid()![tilePos.y][i] = undefined
-            //             }
-            //         }
-
-            //         tile.disableCombine5()
-            //         tile.explode3()
-            //         TilePool.getInstance(this).returnTile(tile)
-            //         this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
-            //     }
-            // } else {
             for (let j = 0; j < tempArr.length; j++) {
                 let tile = tempArr[j]
                 let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
@@ -553,7 +369,6 @@ export class GameScene extends Phaser.Scene {
                     this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
                 }
             }
-            // }
         }
         p0()
     }
@@ -591,12 +406,14 @@ export class GameScene extends Phaser.Scene {
 
             for (let x = 0; x < tempArray.length; x++) {
                 // Check for horizontal matches
-                if (!tempArray[x]) continue
-                groups = []
+                if (!tempArray[x] || this.visited[y][x]) continue
+                let groups = []
                 groups.push(tempArray[x]!)
                 this.visited[y][x] = true
 
                 let tempArrayRight = []
+                let tempArrayRightPositions = []
+
                 for (let k = x + 1; k < tempArray.length; k++) {
                     if (
                         tempArray[k] &&
@@ -604,6 +421,7 @@ export class GameScene extends Phaser.Scene {
                         !this.visited[y][k]
                     ) {
                         tempArrayRight.push(tempArray[k]!)
+                        tempArrayRightPositions.push({ x: k, y: y })
                         this.visited[y][k] = true
                     } else {
                         break
@@ -611,6 +429,8 @@ export class GameScene extends Phaser.Scene {
                 }
 
                 let tempArrayLeft = []
+                let tempArrayLeftPositions = []
+
                 for (let k = x - 1; k >= 0; k--) {
                     if (
                         tempArray[k] &&
@@ -618,15 +438,17 @@ export class GameScene extends Phaser.Scene {
                         !this.visited[y][k]
                     ) {
                         tempArrayLeft.push(tempArray[k]!)
+                        tempArrayLeftPositions.push({ x: k, y: y })
                         this.visited[y][k] = true
                     } else {
                         break
                     }
-                    
                 }
 
                 // Check vertical matches
                 let tempArrayDown = []
+                let tempArrayDownPositions = []
+
                 for (let k = y + 1; k < tileGrid.length; k++) {
                     if (
                         tileGrid[k][x] &&
@@ -634,6 +456,7 @@ export class GameScene extends Phaser.Scene {
                         !this.visited[k][x]
                     ) {
                         tempArrayDown.push(tileGrid[k][x]!)
+                        tempArrayDownPositions.push({ x: x, y: k })
                         this.visited[k][x] = true
                     } else {
                         break
@@ -641,6 +464,8 @@ export class GameScene extends Phaser.Scene {
                 }
 
                 let tempArrayUp = []
+                let tempArrayUpPositions = []
+
                 for (let k = y - 1; k >= 0; k--) {
                     if (
                         tileGrid[k][x] &&
@@ -648,6 +473,7 @@ export class GameScene extends Phaser.Scene {
                         !this.visited[k][x]
                     ) {
                         tempArrayUp.push(tileGrid[k][x]!)
+                        tempArrayUpPositions.push({ x: x, y: k })
                         this.visited[k][x] = true
                     } else {
                         break
@@ -667,49 +493,31 @@ export class GameScene extends Phaser.Scene {
                 } else {
                     // assign all group tempArray visited to false
                     this.visited[y][x] = false
-                    for (let k = 0; k < tempArrayRight.length; k++) {
-                        let tilePos = this.getTilePos(
-                            this.tileGrid.getTileGrid()!,
-                            tempArrayRight[k]
-                        )
-                        
-                        this.visited[tilePos.y][tilePos.x] = false
-                    }
-                    for (let k = 0; k < tempArrayLeft.length; k++) {
-                        let tilePos = this.getTilePos(
-                            this.tileGrid.getTileGrid()!,
-                            tempArrayLeft[k]
-                        )
-                      
-                        this.visited[tilePos.y][tilePos.x] = false
-                    }
-                    for (let k = 0; k < tempArrayDown.length; k++) {
-                        let tilePos = this.getTilePos(
-                            this.tileGrid.getTileGrid()!,
-                            tempArrayDown[k]
-                        )
-                   
-                        this.visited[tilePos.y][tilePos.x] = false
-                    }
-                    for (let k = 0; k < tempArrayUp.length; k++) {
-                        let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tempArrayUp[k])
-                   
-                        this.visited[tilePos.y][tilePos.x] = false
-                    }
+
+                    tempArrayRightPositions.forEach((pos) => {
+                        this.visited[pos.y][pos.x] = false
+                    })
+
+                    tempArrayLeftPositions.forEach((pos) => {
+                        this.visited[pos.y][pos.x] = false
+                    })
+
+                    tempArrayDownPositions.forEach((pos) => {
+                        this.visited[pos.y][pos.x] = false
+                    })
+
+                    tempArrayUpPositions.forEach((pos) => {
+                        this.visited[pos.y][pos.x] = false
+                    })
                 }
             }
         }
-        
-
-      
-        console.log("+: ")
-        console.log(matches)
 
         // check horizontal matches
         for (let y = 0; y < tileGrid.length; y++) {
             let tempArray = tileGrid[y]
             for (let x = 0; x < tempArray.length; x++) {
-                if (!tempArray[x]) continue
+                if (!tempArray[x] || this.visited[y][x]) continue
                 groups = []
                 groups.push(tempArray[x]!)
                 this.visited[y][x] = true
@@ -746,14 +554,14 @@ export class GameScene extends Phaser.Scene {
             }
         }
 
-        console.log("horizontal: ")
+        console.log('horizontal: ')
         console.log(matches)
 
         // check vertical matches
         for (let y = 0; y < tileGrid.length; y++) {
             let tempArray = tileGrid[y]
             for (let x = 0; x < tempArray.length; x++) {
-                if (!tempArray[x]) continue
+                if (!tempArray[x] || this.visited[y][x]) continue
                 groups = []
                 groups.push(tempArray[x]!)
                 this.visited[y][x] = true
@@ -788,7 +596,6 @@ export class GameScene extends Phaser.Scene {
             }
         }
 
-        console.log(matches)
         return matches
     }
 }
