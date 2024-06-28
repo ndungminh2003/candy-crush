@@ -62,22 +62,6 @@ export class Tile extends Phaser.GameObjects.Image {
     public enableCombine4(): void {
         this.isCombine4 = true
 
-        // if (this.isCombine4) {
-        //     this.scene.add
-        //         .particles(this.x, this.y, 'flare', {
-        //             frame: 'white',
-        //             color: [0xfacc22, 0xf89800, 0xf83600, 0x9f0404],
-        //             colorEase: 'quad.out',
-        //             lifespan: 1000,
-        //             angle: { min: -100, max: -80 },
-        //             scale: { start: 0.7, end: 0, ease: 'sine.out' },
-        //             speed: 100,
-        //             advance: 2000,
-        //             blendMode: 'ADD',
-        //         })
-        //         .startFollow(this, -this.x, -this.y).setDepth(-1)
-        // }
-
         this.particleCombine4 = this.scene.add
             .particles(this.x, this.y, 'flare', {
                 color: [0xfacc22, 0xf89800, 0xf83600, 0x9f0404],
@@ -95,23 +79,6 @@ export class Tile extends Phaser.GameObjects.Image {
 
     public enableCombine5(): void {
         this.isCombine5 = true
-
-        // if (this.isCombine5) {
-        //     this.scene.add
-        //         .particles(this.x, this.y, 'flare', {
-        //             frame: 'white',
-        //             color: [0xff69b4, 0x0000ff],
-        //             colorEase: 'quad.out',
-        //             lifespan: 1000,
-        //             angle: { min: -100, max: -80 },
-        //             scale: { start: 0.7, end: 0, ease: 'sine.out' },
-        //             speed: 100,
-        //             advance: 2000,
-        //             blendMode: 'ADD',
-        //         })
-        //         .startFollow(this, -this.x, -this.y)
-        //         .setDepth(-1)
-        // }
 
         this.particleCombine4 = this.scene.add
             .particles(this.x, this.y, 'flare', {

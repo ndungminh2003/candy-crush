@@ -1,5 +1,6 @@
 import { Tile } from './Tile'
 import { CONST } from '../const/const'
+import { TilePool } from './TilePool'
 
 export class TileGrid extends Phaser.GameObjects.Container {
     private tileGrid: Array<Array<Tile | undefined>> | undefined
@@ -44,9 +45,9 @@ export class TileGrid extends Phaser.GameObjects.Container {
 
         let i = 0
 
-        let children = this.tileGrid!.flat().filter(tile => tile !== undefined) as Tile[]
+        let children = this.tileGrid!.flat().filter((tile) => tile !== undefined) as Tile[]
 
-        children.forEach(child => {
+        children.forEach((child) => {
             this.scene.tweens.add({
                 targets: child,
                 scale: 1.2,
@@ -55,7 +56,7 @@ export class TileGrid extends Phaser.GameObjects.Container {
                 delay: i * 50,
                 repeat: 0,
                 yoyo: true,
-                repeatDelay: 500
+                repeatDelay: 500,
             })
 
             i++
@@ -71,13 +72,6 @@ export class TileGrid extends Phaser.GameObjects.Container {
             this.idleTween = undefined
         }
     }
-
-    public removeMatch4(tempArr : Tile[]) : void{
-        
-    }
-
-
-
 
     private getTilePos(tileGrid: (Tile | undefined)[][], tile: Tile): any {
         let pos = { x: -1, y: -1 }
@@ -97,4 +91,29 @@ export class TileGrid extends Phaser.GameObjects.Container {
         return pos
     }
 
+    public handleExplode(tile: Tile): void {
+        if (tile === undefined) return
+
+        this.emit3(tile)
+    }
+
+    public emit4(tile: Tile): void {
+        let pos = this.getTilePos(this.tileGrid!, tile)
+
+        //Explode the tile
+        tile.enableCombine4()
+
+        //Remove the tile from the grid
+        this.tileGrid![pos.y][pos.x] = undefined
+    }
+
+    public emit5(tile: Tile): void {}
+
+    public emit3(tile: Tile): void {
+        let tilePos = this.getTilePos(this.tileGrid!, tile)
+
+        tile.explode3()
+        TilePool.getInstance(this.scene).returnTile(tile)
+        this.tileGrid![tilePos.y][tilePos.x] = undefined
+    }
 }

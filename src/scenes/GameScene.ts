@@ -192,8 +192,8 @@ export class GameScene extends Phaser.Scene {
             var tempArr = matches[i]
 
             if (tempArr.length === 4) {
-                const posX = tempArr[2].x
-                const posY = tempArr[2].y
+                const posX = tempArr[0].x
+                const posY = tempArr[0].y
 
                 for (let j = 1; j < tempArr.length; j++) {
                     const tile = tempArr[j]
@@ -212,7 +212,7 @@ export class GameScene extends Phaser.Scene {
                         },
                     })
                 }
-                tempArr[2].enableCombine4()
+                tempArr[0].enableCombine4()
             } else if (tempArr.length >= 5) {
                 const posX = tempArr[0].x
                 const posY = tempArr[0].y
@@ -364,9 +364,7 @@ export class GameScene extends Phaser.Scene {
                 let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
 
                 if (tilePos.x !== -1 && tilePos.y !== -1) {
-                    tile.explode3()
-                    TilePool.getInstance(this).returnTile(tile)
-                    this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
+                    this.tileGrid.handleExplode(tile)
                 }
             }
         }
@@ -553,9 +551,6 @@ export class GameScene extends Phaser.Scene {
                 }
             }
         }
-
-        console.log('horizontal: ')
-        console.log(matches)
 
         // check vertical matches
         for (let y = 0; y < tileGrid.length; y++) {
