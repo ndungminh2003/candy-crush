@@ -2,6 +2,18 @@ import { Tile } from './Tile'
 import { CONST } from '../const/const'
 import { TilePool } from './TilePool'
 
+const emit4Direction = [
+    { y: -1, x: -1 },
+    { y: -1, x: 0 },
+    { y: -1, x: 1 },
+    { y: 0, x: -1 },
+    { y: 0, x: 0 },
+    { y: 0, x: 1 },
+    { y: 1, x: -1 },
+    { y: 1, x: 0 },
+    { y: 1, x: 1 },
+]
+
 export class TileGrid extends Phaser.GameObjects.Container {
     private tileGrid: Array<Array<Tile | undefined>> | undefined
     private idleTween: Phaser.Tweens.Tween | undefined
@@ -94,22 +106,85 @@ export class TileGrid extends Phaser.GameObjects.Container {
     public handleExplode(tile: Tile): void {
         if (tile === undefined) return
 
-        this.emit3(tile)
+        if (tile.getIsCombine4()) {
+            this.emit4(tile)
+            return
+        } else if (tile.getIsCombine5()) {
+            this.emit5(tile)
+            return
+        } else {
+            this.emit3(tile)
+            return
+        }
     }
 
     public emit4(tile: Tile): void {
+        if (tile === undefined) return
+
         let pos = this.getTilePos(this.tileGrid!, tile)
 
-        //Explode the tile
-        tile.enableCombine4()
+        this.emit3(tile)
+        tile.disableCombine4()
 
-        //Remove the tile from the grid
-        this.tileGrid![pos.y][pos.x] = undefined
+        if (pos.x === -1 || pos.y === -1) return
+
+        for (let i = 0; i < emit4Direction.length; i++) {
+            let y = pos.y + emit4Direction[i].y
+            let x = pos.x + emit4Direction[i].x
+
+            if (y < 0 || y >= CONST.gridRows || x < 0 || x >= CONST.gridColumns) continue
+
+            let tile = this.tileGrid![y][x] as Tile
+            if (tile === undefined) continue
+
+            this.handleExplode(tile)
+        }
     }
 
-    public emit5(tile: Tile): void {}
+    public emit5(tile: Tile): void {
+        let pos = this.getTilePos(this.tileGrid!, tile)
+
+        if (pos.x === -1 || pos.y === -1) return
+
+        this.emit3(tile)
+        tile.disableCombine5()
+
+        // remove left
+        for (let x = pos.x - 1; x >= 0; x--) {
+            let tile = this.tileGrid![pos.y][x] as Tile
+            if (tile === undefined) continue
+
+            this.handleExplode(tile)
+        }
+
+        // remove right
+        for (let x = pos.x + 1; x < CONST.gridColumns; x++) {
+            let tile = this.tileGrid![pos.y][x] as Tile
+            if (tile === undefined) continue
+
+            this.handleExplode(tile)
+        }
+
+        // remove top
+        for (let y = pos.y - 1; y >= 0; y--) {
+            let tile = this.tileGrid![y][pos.x] as Tile
+            if (tile === undefined) continue
+
+            this.handleExplode(tile)
+        }
+
+        // remove bottom
+        for (let y = pos.y + 1; y < CONST.gridRows; y++) {
+            let tile = this.tileGrid![y][pos.x] as Tile
+            if (tile === undefined) continue
+
+            this.handleExplode(tile)
+        }
+    }
 
     public emit3(tile: Tile): void {
+        if (tile === undefined) return
+
         let tilePos = this.getTilePos(this.tileGrid!, tile)
 
         tile.explode3()

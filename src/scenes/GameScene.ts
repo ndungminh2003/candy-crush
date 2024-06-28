@@ -256,9 +256,9 @@ export class GameScene extends Phaser.Scene {
         if (matches.length > 0) {
             this.mergeMatch(matches, () => {
                 this.removeTileGroup(matches, () =>
-                    this.time.delayedCall(300, () => {
+                    this.time.delayedCall(350, () => {
                         this.resetTile(() => {
-                            this.time.delayedCall(300, () => {
+                            this.time.delayedCall(350, () => {
                                 this.tileUp()
                                 this.checkMatches()
                             })
@@ -368,6 +368,8 @@ export class GameScene extends Phaser.Scene {
                 }
             }
         }
+
+        this.time.delayedCall(100, p0, undefined, this)
         p0()
     }
 
