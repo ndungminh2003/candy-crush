@@ -15,6 +15,10 @@ export class GameScene extends Phaser.Scene {
     private firstSelectedTile: Tile | undefined
     private secondSelectedTile: Tile | undefined
     private idleTimer: Phaser.Time.TimerEvent | undefined
+    private hintTimer: Phaser.Time.TimerEvent | undefined
+
+    private emitterFirstHint: Phaser.GameObjects.Particles.ParticleEmitter
+    private emitterSecondHint: Phaser.GameObjects.Particles.ParticleEmitter
 
     constructor() {
         super({
@@ -47,9 +51,13 @@ export class GameScene extends Phaser.Scene {
         this.input.on('gameobjectdown', this.tileDown, this)
 
         // Check if matches on the start
+
         this.checkMatches()
 
         this.resetIdleTimer()
+
+        this.resetHintTimer()
+        this.clearHint()
     }
 
     private resetIdleTimer(): void {
@@ -119,6 +127,34 @@ export class GameScene extends Phaser.Scene {
                 }
             }
         }
+
+        const confetti = this.add.particles(0, window.innerHeight / 2, 'confetti', {
+            frame: [
+                '1.png',
+                '2.png',
+                '3.png',
+                '4.png',
+                '5.png',
+                '6.png',
+                '7.png',
+                '8.png',
+                '9.png',
+                '10.png',
+            ],
+            x: 20,  // Spread the particles across the width of the screen
+            y: { min: window.innerHeight - 200, max: window.innerHeight - 300 },
+            alpha: { start: 0.75, end: 1 },
+            lifespan: 3000,
+            angle: { min: 260, max: 280 },  // Adjusted to shoot upwards
+            speed: { min: 500, max: 600 },
+            scale: { start: 0.2, end: 0 },
+            gravityY: 250,  // Negative value to counteract the downward pull and push the particles upwards
+        });
+        
+
+        console.log(confetti)
+        confetti.explode(40)
+        
     }
 
     /**
@@ -195,6 +231,13 @@ export class GameScene extends Phaser.Scene {
                 const posX = tempArr[0].x
                 const posY = tempArr[0].y
 
+                let isTile4 = false
+                for (let i = 0; i < tempArr.length; i++) {
+                    if (tempArr[i].getIsCombine4()) {
+                        isTile4 = true
+                    }
+                }
+
                 for (let j = 1; j < tempArr.length; j++) {
                     const tile = tempArr[j]
                     let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
@@ -212,7 +255,12 @@ export class GameScene extends Phaser.Scene {
                         },
                     })
                 }
-                tempArr[0].enableCombine4()
+
+                if (isTile4) {
+                    tempArr[0].enableCombine5()
+                } else {
+                    tempArr[0].enableCombine4()
+                }
             } else if (tempArr.length >= 5) {
                 const posX = tempArr[0].x
                 const posY = tempArr[0].y
@@ -252,13 +300,15 @@ export class GameScene extends Phaser.Scene {
         //a run of three or more tiles in a row
         let matches = this.getMatches(this.tileGrid.getTileGrid()!)
 
+        
+
         //If there are matches, remove them
         if (matches.length > 0) {
             this.mergeMatch(matches, () => {
                 this.removeTileGroup(matches, () =>
-                    this.time.delayedCall(350, () => {
+                    this.time.delayedCall(300, () => {
                         this.resetTile(() => {
-                            this.time.delayedCall(350, () => {
+                            this.time.delayedCall(300, () => {
                                 this.tileUp()
                                 this.checkMatches()
                             })
@@ -273,6 +323,9 @@ export class GameScene extends Phaser.Scene {
 
             this.canMove = true
         }
+
+        this.clearHint()
+        this.resetHintTimer()
 
         // console.log(this.tileGrid.getTileGrid()!)
     }
@@ -594,5 +647,133 @@ export class GameScene extends Phaser.Scene {
         }
 
         return matches
+    }
+
+    private getPossibleMatches(): any[] {
+        let possibleMatches = []
+
+        // Create a copy of the tile grid
+        let tileGridCopy = this.copyTileGrid(this.tileGrid.getTileGrid()! as Tile[][])
+
+        for (let y = 0; y < CONST.gridRows; y++) {
+            for (let x = 0; x < CONST.gridColumns; x++) {
+                // Check horizontal matches
+                if (x < CONST.gridColumns - 1) {
+                    this.swapTiles1(tileGridCopy, x, y, x + 1, y)
+                    if (this.checkMatch(tileGridCopy)) {
+                        possibleMatches.push([{ x1: x, y1: y, x2: x + 1, y2: y }])
+                    }
+                    this.swapTiles1(tileGridCopy, x, y, x + 1, y) // Swap back
+                }
+
+                // Check vertical matches
+                if (y < CONST.gridRows - 1) {
+                    this.swapTiles1(tileGridCopy, x, y, x, y + 1)
+                    if (this.checkMatch(tileGridCopy)) {
+                        possibleMatches.push([{ x1: x, y1: y, x2: x, y2: y + 1 }])
+                    }
+                    this.swapTiles1(tileGridCopy, x, y, x, y + 1) // Swap back
+                }
+            }
+        }
+
+        // return one element of the array possibleMatch
+
+        let randomIndex = Math.floor(Math.random() * possibleMatches.length)
+
+        return possibleMatches[randomIndex]
+    }
+
+    // Function to create a deep copy of the tile grid
+    private copyTileGrid(tileGrid: Tile[][]): Tile[][] {
+        return tileGrid.map((row) => row.slice())
+    }
+
+    // Function to swap tiles in the given grid
+    private swapTiles1(tileGrid: Tile[][], x1: number, y1: number, x2: number, y2: number): void {
+        let temp = tileGrid[y1][x1]
+        tileGrid[y1][x1] = tileGrid[y2][x2]
+        tileGrid[y2][x2] = temp
+    }
+
+    // Function to check if there's a match on the board
+    private checkMatch(tileGrid: Tile[][]): boolean {
+        let matches = this.getMatches(tileGrid)
+        return matches.length > 0
+    }
+
+    private resetHintTimer(): void {
+        if (this.hintTimer) {
+            this.hintTimer.remove(false)
+        }
+
+        this.hintTimer = this.time.addEvent({
+            delay: 5000, // 5 seconds
+            callback: () => this.showHint(),
+            callbackScope: this,
+            loop: false,
+        })
+    }
+
+    private showHint(): void {
+        const hint = this.getPossibleMatches()
+        if (hint) {
+            // Clear any existing hint graphics or particles
+            this.clearHint()
+
+            // Get the bounds of the tiles to create the emit zones
+            const emitZone1 = {
+                type: 'edge',
+                source: new Phaser.Geom.Rectangle(
+                    hint[0].x1 * CONST.tileWidth,
+                    hint[0].y1 * CONST.tileHeight,
+                    CONST.tileWidth,
+                    CONST.tileHeight
+                ),
+                quantity: 42,
+            }
+
+            const emitZone2 = {
+                type: 'edge',
+                source: new Phaser.Geom.Rectangle(
+                    hint[0].x2 * CONST.tileWidth,
+                    hint[0].y2 * CONST.tileHeight,
+                    CONST.tileWidth,
+                    CONST.tileHeight
+                ),
+                quantity: 42,
+            }
+
+            // Create the first particle emitter for the first hint
+            this.emitterFirstHint = this.add.particles(0, 0, 'flare', {
+                color: [0xff0000, 0xff7f00, 0xffff00, 0x00ff00, 0x0000ff, 0x8a2be2],
+                speed: 20,
+                lifespan: 250,
+                quantity: 2,
+                scale: { start: 0.2, end: 0 },
+                advance: 2000,
+                emitZone: emitZone1,
+            })
+
+            // Create the second particle emitter for the second hint
+            this.emitterSecondHint = this.add.particles(0, 0, 'flare', {
+                color: [0xff0000, 0xff7f00, 0xffff00, 0x00ff00, 0x0000ff, 0x8a2be2],
+                speed: 20,
+                lifespan: 250,
+                quantity: 2,
+                scale: { start: 0.2, end: 0 },
+                advance: 2000,
+                emitZone: emitZone2,
+            })
+        }
+    }
+
+    private clearHint(): void {
+        if (this.emitterFirstHint) {
+            this.emitterFirstHint.stop()
+        }
+        if (this.emitterSecondHint) {
+            this.emitterSecondHint.stop()
+        }
     }
 }

@@ -52,7 +52,7 @@ export class TilePool {
     }
 
     public returnTile(tile: Tile): void {
-        tile.setPosition(-1, -1)
+        tile.setPosition(-100, -100)
         tile.setVisible(false)
         this.pool.push(tile)
     }

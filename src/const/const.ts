@@ -10,7 +10,7 @@ export let CONST = {
         'cookie2',
         'croissant',
         'cupcake',
-        // 'donut',
+        'donut',
         // 'eclair',
         // 'macaroon',
         // 'pie',

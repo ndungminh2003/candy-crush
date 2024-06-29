@@ -65,6 +65,12 @@
         "type": "image", 
         "key": "flare",
         "url": "./assets/images/white.png"
+      },
+      {
+        "type": "atlas",
+        "key": "confetti",
+        "textureURL": "./assets/confetti/confetti.png",
+        "atlasURL": "./assets/confetti/confetti.json"
       }
     ]
   }
