@@ -192,6 +192,5 @@ export class TileGrid extends Phaser.GameObjects.Container {
         this.tileGrid![tilePos.y][tilePos.x] = undefined
     }
 
-    
-    
+
 }

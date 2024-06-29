@@ -141,20 +141,18 @@ export class GameScene extends Phaser.Scene {
                 '9.png',
                 '10.png',
             ],
-            x: 20,  // Spread the particles across the width of the screen
+            x: 20, // Spread the particles across the width of the screen
             y: { min: window.innerHeight - 200, max: window.innerHeight - 300 },
             alpha: { start: 0.75, end: 1 },
             lifespan: 3000,
-            angle: { min: 260, max: 280 },  // Adjusted to shoot upwards
+            angle: { min: 260, max: 280 }, // Adjusted to shoot upwards
             speed: { min: 500, max: 600 },
             scale: { start: 0.2, end: 0 },
-            gravityY: 250,  // Negative value to counteract the downward pull and push the particles upwards
-        });
-        
+            gravityY: 250, // Negative value to counteract the downward pull and push the particles upwards
+        })
 
-        console.log(confetti)
+        // console.log(confetti)
         confetti.explode(40)
-        
     }
 
     /**
@@ -221,37 +219,43 @@ export class GameScene extends Phaser.Scene {
         }
     }
 
-    private mergeMatch(matches: any, p0: () => void): void {
-        let hasTween = false
+    private mergeMatch(matches: any): void {
+        let totalTweens = 0
+        let tweensAdded = false
 
-        for (var i = 0; i < matches.length; i++) {
-            var tempArr = matches[i]
+        for (let i = 0; i < matches.length; i++) {
+            const tempArr = matches[i]
 
             if (tempArr.length === 4) {
                 const posX = tempArr[0].x
                 const posY = tempArr[0].y
 
                 let isTile4 = false
-                for (let i = 0; i < tempArr.length; i++) {
-                    if (tempArr[i].getIsCombine4()) {
+                for (let j = 0; j < tempArr.length; j++) {
+                    if (tempArr[j].getIsCombine4()) {
                         isTile4 = true
                     }
                 }
 
                 for (let j = 1; j < tempArr.length; j++) {
                     const tile = tempArr[j]
-                    let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
+                    const tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
 
-                    hasTween = true
+                    totalTweens++
+                    tweensAdded = true
                     this.add.tween({
                         targets: tile,
                         x: posX,
                         y: posY,
                         ease: 'Linear',
-                        duration: 200,
+                        duration: 300,
                         onComplete: () => {
                             TilePool.getInstance(this).returnTile(tile)
                             this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
+                            totalTweens--
+                            if (totalTweens === 0) {
+                                this.removeTileGroup(matches, this.resetTile.bind(this))
+                            }
                         },
                     })
                 }
@@ -267,18 +271,24 @@ export class GameScene extends Phaser.Scene {
 
                 for (let j = 1; j < tempArr.length; j++) {
                     const tile = tempArr[j]
-                    let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
+                    const tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
 
-                    hasTween = true
+                    totalTweens++
+                    tweensAdded = true
                     this.add.tween({
                         targets: tile,
                         x: posX,
                         y: posY,
                         ease: 'Linear',
-                        duration: 200,
+                        duration: 300,
                         onComplete: () => {
                             TilePool.getInstance(this).returnTile(tile)
                             this.tileGrid.getTileGrid()![tilePos.y][tilePos.x] = undefined
+
+                            totalTweens--
+                            if (totalTweens === 0) {
+                                this.removeTileGroup(matches, this.resetTile.bind(this))
+                            }
                         },
                     })
                 }
@@ -286,36 +296,20 @@ export class GameScene extends Phaser.Scene {
             }
         }
 
-        if (hasTween) {
-            // Delay the callback if there's a tween
-            this.time.delayedCall(200, p0, undefined, this)
-        } else {
-            // Call the callback immediately if no tween
-            p0()
+        if (!tweensAdded) {
+            this.removeTileGroup(matches, this.resetTile.bind(this))
         }
     }
 
     private checkMatches(): void {
         //Call the getMatches function to check for spots where there is
         //a run of three or more tiles in a row
-        let matches = this.getMatches(this.tileGrid.getTileGrid()!)
 
-        
+        let matches = this.getMatches(this.tileGrid.getTileGrid()!)
 
         //If there are matches, remove them
         if (matches.length > 0) {
-            this.mergeMatch(matches, () => {
-                this.removeTileGroup(matches, () =>
-                    this.time.delayedCall(300, () => {
-                        this.resetTile(() => {
-                            this.time.delayedCall(300, () => {
-                                this.tileUp()
-                                this.checkMatches()
-                            })
-                        })
-                    })
-                )
-            })
+            this.mergeMatch(matches)
         } else {
             // No match so just swap the tiles back to their original position and reset
             this.swapTiles()
@@ -326,39 +320,44 @@ export class GameScene extends Phaser.Scene {
 
         this.clearHint()
         this.resetHintTimer()
-
-        // console.log(this.tileGrid.getTileGrid()!)
     }
 
-    private async resetTile(p0: () => void): Promise<void> {
-        // Loop through each column starting from the bottom row
+    private resetTile(): void {
+        let totalTweens = 0
+        let tweensAdded = false
+
+        // Move existing tiles down
         for (let y = this.tileGrid.getTileGrid()!.length - 1; y > 0; y--) {
-            // Loop through each tile in the column from right to left
             for (let x = this.tileGrid.getTileGrid()![y].length - 1; x >= 0; x--) {
-                // If this space is blank, find the first non-undefined tile above it
                 if (this.tileGrid.getTileGrid()![y][x] === undefined) {
                     let foundTile = false
                     for (let k = y - 1; k >= 0; k--) {
                         if (this.tileGrid.getTileGrid()![k][x] !== undefined) {
-                            let tempTile = this.tileGrid.getTileGrid()![k][x]
+                            const tempTile = this.tileGrid.getTileGrid()![k][x]
                             this.tileGrid.getTileGrid()![y][x] = tempTile
                             this.tileGrid.getTileGrid()![k][x] = undefined
 
+                            totalTweens++
+                            tweensAdded = true
                             this.add.tween({
                                 targets: tempTile,
                                 y: CONST.tileHeight * y + CONST.tileHeight / 2,
                                 ease: 'Bounce.easeOut',
-                                duration: 300,
-                                repeat: 0,
-                                yoyo: false,
-                                autoDestroy: true,
+                                duration: 400,
+                                onComplete: () => {
+                                    totalTweens--
+                                    if (totalTweens === 0) {
+                                        this.canMove = true
+                                        this.tileUp()
+                                        this.checkMatches()
+                                    }
+                                },
                             })
 
                             foundTile = true
                             break
                         }
                     }
-                    // If a tile was moved, restart checking from the bottom again
                     if (foundTile) {
                         x = this.tileGrid.getTileGrid()![y].length
                     }
@@ -366,37 +365,43 @@ export class GameScene extends Phaser.Scene {
             }
         }
 
-        // Iterate through each row of the grid from bottom to top
+        // Add new tiles
         for (let y = this.tileGrid.getTileGrid()!.length - 1; y >= 0; y--) {
-            // Iterate through each column in the current row
             for (let x = 0; x < this.tileGrid.getTileGrid()![y].length; x++) {
-                // Check if the current position in the grid is undefined (empty)
                 if (this.tileGrid.getTileGrid()![y][x] === undefined) {
-                    // Get a new tile from the tile pool
-                    let tile = TilePool.getInstance(this).getTile(x, y)
-                    // Position the tile above the top of the grid (off-screen)
+                    const tile = TilePool.getInstance(this).getTile(x, y)
                     tile.y = -(
                         CONST.tileHeight * (this.tileGrid.getTileGrid()!.length - y) +
                         CONST.tileHeight / 2
                     )
 
-                    // Animate the tile to move into its correct position
+                    totalTweens++
+                    tweensAdded = true
                     this.add.tween({
                         targets: tile,
                         y: CONST.tileHeight * y + CONST.tileHeight / 2,
                         ease: 'Bounce.easeOut',
-                        duration: 300,
-                        repeat: 0,
-                        yoyo: false,
+                        duration: 400,
+                        onComplete: () => {
+                            totalTweens--
+                            if (totalTweens === 0) {
+                                this.canMove = true
+                                this.tileUp()
+                                this.checkMatches()
+                            }
+                        },
                     })
 
-                    // Update the grid with the new tile
                     this.tileGrid.getTileGrid()![y][x] = tile
                 }
             }
         }
 
-        p0()
+        if (!tweensAdded) {
+            this.canMove = true
+            this.tileUp()
+            this.checkMatches()
+        }
     }
 
     private tileUp(): void {
@@ -405,16 +410,17 @@ export class GameScene extends Phaser.Scene {
         this.secondSelectedTile = undefined
     }
 
-    private removeTileGroup(matches: any, p0: () => void): void {
+    private removeTileGroup(matches: any, callback: () => void): void {
         // get only match3 in matches
-        let match3 = matches.filter((match: any) => match.length === 3)
+        console.log("hello i'm removeTileGroup")
+        const match3 = matches.filter((match: any) => match.length === 3)
 
-        for (var i = 0; i < match3.length; i++) {
-            var tempArr = match3[i]
+        for (let i = 0; i < match3.length; i++) {
+            const tempArr = match3[i]
 
             for (let j = 0; j < tempArr.length; j++) {
-                let tile = tempArr[j]
-                let tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
+                const tile = tempArr[j]
+                const tilePos = this.getTilePos(this.tileGrid.getTileGrid()!, tile)
 
                 if (tilePos.x !== -1 && tilePos.y !== -1) {
                     this.tileGrid.handleExplode(tile)
@@ -422,8 +428,8 @@ export class GameScene extends Phaser.Scene {
             }
         }
 
-        this.time.delayedCall(100, p0, undefined, this)
-        p0()
+        // Call the callback after removing the tile group
+        callback()
     }
 
     private getTilePos(tileGrid: (Tile | undefined)[][], tile: Tile): any {
