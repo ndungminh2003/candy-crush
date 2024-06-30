@@ -66,7 +66,7 @@ export class GameScene extends Phaser.Scene {
         }
 
         this.idleTimer = this.time.addEvent({
-            delay: 10000,
+            delay: 1000,
             callback: () => this.playIdleAnimation(),
             callbackScope: this,
             loop: true,
@@ -91,7 +91,7 @@ export class GameScene extends Phaser.Scene {
      */
     private tileDown(pointer: any, gameobject: any, event: any): void {
         this.resetIdleTimer()
-        this.stopIdleAnimation()
+        
         if (this.canMove) {
             if (!this.firstSelectedTile) {
                 this.firstSelectedTile = gameobject
@@ -232,7 +232,7 @@ export class GameScene extends Phaser.Scene {
 
                 let isTile4 = false
                 for (let j = 0; j < tempArr.length; j++) {
-                    if (tempArr[j].getIsCombine4()) {
+                    if (tempArr[j].getIsCombine4() || tempArr[j].getIsCombine5()) {
                         isTile4 = true
                     }
                 }
@@ -342,8 +342,8 @@ export class GameScene extends Phaser.Scene {
                             this.add.tween({
                                 targets: tempTile,
                                 y: CONST.tileHeight * y + CONST.tileHeight / 2,
-                                ease: 'Bounce.easeOut',
-                                duration: 400,
+                                ease: 'Cubic.easeOut',
+                                duration: 500,
                                 onComplete: () => {
                                     totalTweens--
                                     if (totalTweens === 0) {
@@ -380,8 +380,9 @@ export class GameScene extends Phaser.Scene {
                     this.add.tween({
                         targets: tile,
                         y: CONST.tileHeight * y + CONST.tileHeight / 2,
-                        ease: 'Bounce.easeOut',
-                        duration: 400,
+                        ease: 'Cubic.easeOut',
+                        duration: 500,
+                        alpha: { start: 0, to: 1 },
                         onComplete: () => {
                             totalTweens--
                             if (totalTweens === 0) {
@@ -412,7 +413,7 @@ export class GameScene extends Phaser.Scene {
 
     private removeTileGroup(matches: any, callback: () => void): void {
         // get only match3 in matches
-        console.log("hello i'm removeTileGroup")
+
         const match3 = matches.filter((match: any) => match.length === 3)
 
         for (let i = 0; i < match3.length; i++) {

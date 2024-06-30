@@ -53,29 +53,34 @@ export class TileGrid extends Phaser.GameObjects.Container {
     }
 
     public playIdleAnimation(): void {
-        if (this.idleTween) return // Prevent multiple tweens
+        if (this.idleTween) return 
 
         let i = 0
 
-        let children = this.tileGrid!.flat().filter((tile) => tile !== undefined) as Tile[]
+        for (let y = 0; y < CONST.gridRows; y++) {
+            let row = this.tileGrid![y]
+            for (let x = 0; x < CONST.gridColumns; x++) {
+                let tile = row[x]
+                if (tile === undefined) continue
 
-        children.forEach((child) => {
-            this.scene.tweens.add({
-                targets: child,
-                scale: 1.2,
-                ease: 'sine.inout',
-                duration: 300,
-                delay: i * 50,
-                repeat: 0,
-                yoyo: true,
-                repeatDelay: 500,
-            })
+                this.idleTween = this.scene.tweens.add({
+                    targets: tile,
+                    scale: 0.6,
+                    ease: 'sine.inout',
+                    duration: 300,
+                    delay: i * 50,
+                    repeat: 2,
+                    yoyo: true,
+                    repeatDelay: 200
+                })
 
-            i++
-            if (i % 12 === 0) {
-                i = 0
+                i++
+                if (i % 8 === 0) {
+                    i = 0
+                }
             }
-        })
+
+        }
     }
 
     public stopIdleAnimation(): void {
@@ -191,6 +196,4 @@ export class TileGrid extends Phaser.GameObjects.Container {
         TilePool.getInstance(this.scene).returnTile(tile)
         this.tileGrid![tilePos.y][tilePos.x] = undefined
     }
-
-
 }

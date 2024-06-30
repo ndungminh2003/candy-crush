@@ -1,4 +1,5 @@
 import { ImageConstructor } from '../interfaces/image.interface'
+import { CONST } from '../const/const'
 
 export class Tile extends Phaser.GameObjects.Image {
     private isSelect: boolean = false
@@ -32,13 +33,14 @@ export class Tile extends Phaser.GameObjects.Image {
 
         this.particleCombine4 = this.scene.add
             .particles(this.x, this.y, 'flare', {
-                color: [0xfacc22, 0xf89800, 0xf83600, 0x9f0404],
+                color: [0x8a2be2, 0x9400d3, 0x9932cc, 0x4b0082],
                 colorEase: 'quad.out',
-                lifespan: 1000,
-                angle: { min: -100, max: -80 },
-                scale: { start: 0.7, end: 0, ease: 'sine.out' },
-                speed: 100,
-                advance: 2000,
+                lifespan: 1500,
+                angle: { min: -120, max: -60 },
+                scale: { start: 0.9, end: 0, ease: 'expo.out' },
+                speed: { min: 150, max: 200 },
+                quantity: 5,
+                frequency: 100,
                 blendMode: 'ADD',
                 emitting: false,
             })
@@ -47,13 +49,14 @@ export class Tile extends Phaser.GameObjects.Image {
 
         this.particleCombine5 = this.scene.add
             .particles(this.x, this.y, 'flare', {
-                color: [0xff69b4, 0x0000ff],
+                color: [0x00ff00, 0x32cd32, 0x98fb98, 0xadff2f],
                 colorEase: 'quad.out',
-                lifespan: 1000,
-                angle: { min: -100, max: -80 },
-                scale: { start: 0.7, end: 0, ease: 'sine.out' },
-                speed: 100,
-                advance: 2000,
+                lifespan: 1500,
+                angle: { min: -120, max: -60 },
+                scale: { start: 0.9, end: 0, ease: 'expo.out' },
+                speed: { min: 150, max: 200 },
+                quantity: 5,
+                frequency: 100,
                 blendMode: 'ADD',
                 emitting: false,
             })
@@ -78,15 +81,26 @@ export class Tile extends Phaser.GameObjects.Image {
 
     public explode3(): void {
         const explode3 = this.scene.add.particles(this.x, this.y, 'flare', {
-            lifespan: 4000,
-            speed: { min: 250, max: 500 },
-            scale: { start: 0.4, end: 0 },
-            gravityY: 150,
+            speed: { min: -50, max: 50 },
+            lifespan: 600,
             blendMode: 'ADD',
-            emitting: false,
+            scale: { start: 0.2, end: 0 },
+            gravityY: 50,
+            alpha: { start: 1, end: 0 },
+            emitZone: {
+                source: new Phaser.Geom.Rectangle(
+                    -CONST.tileWidth / 2,
+                    -CONST.tileHeight / 2,
+                    64,
+                    72
+                ),
+                type: 'edge',
+                quantity: 30,
+                total: 120,
+            },
         })
 
-        explode3.explode(15)
+        explode3.explode(30)
     }
 
     public enableCombine4(): void {
