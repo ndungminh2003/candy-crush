@@ -15,7 +15,7 @@ export class HUDScene extends Phaser.Scene {
     create(): void {
         // Progress box with rounded corners
         this.progressBox = this.add.graphics()
-        this.progressBox.fillStyle(0x222222, 0.8)
+        this.progressBox.fillStyle(0xFF4500, 0.8)
         this.progressBox.fillRect(600, 100, 320, 40) // Rounded corners
 
         // Progress bar
@@ -53,7 +53,7 @@ export class HUDScene extends Phaser.Scene {
             duration: 200,
             onUpdate: () => {
                 this.progressBar.clear()
-                this.progressBar.fillStyle(0xffffff, 1)
+                this.progressBar.fillStyle(0xFFA500, 1)
                 this.progressBar.fillRect(600, 100, this.progressValue, 40) // Rounded corners
 
                 // Update particle emitter position to the right side of the progress bar

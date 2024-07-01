@@ -2,7 +2,7 @@ import { Tile } from './Tile'
 import { CONST } from '../const/const'
 import { TilePool } from './TilePool'
 import { ParticleManager } from '../manager/ParticleManager'
-import { ShapePath, PathType } from './ShapePath'
+import { ShapePath } from './ShapePath'
 import { Level } from './Level'
 
 const emit4Direction = [
@@ -27,14 +27,16 @@ export class TileGrid extends Phaser.GameObjects.Container {
     private firstSelectedTile: Tile | undefined
     private secondSelectedTile: Tile | undefined
 
+    private idleTimeoutDuration: number = 10000 // 5 seconds
     private idleTimer: Phaser.Time.TimerEvent | undefined
+    private isIdle: boolean = false
+
     private hintTimer: Phaser.Time.TimerEvent | undefined
 
     private emitterFirstHint: Phaser.GameObjects.Particles.ParticleEmitter
     private emitterSecondHint: Phaser.GameObjects.Particles.ParticleEmitter
     private shapePath: ShapePath
     private isNext: Boolean = false
-
 
     private tileArr: Tile[]
 
@@ -70,11 +72,12 @@ export class TileGrid extends Phaser.GameObjects.Container {
         // Input
         this.scene.input.on('gameobjectdown', this.tileDown, this)
 
+        this.scene.input.on('pointerdown', this.handleInteraction, this)
+
+        this.startIdleTimer()
+
         // Check if matches on the start
-
         this.checkMatches()
-
-        this.resetIdleTimer()
 
         this.resetHintTimer()
         this.clearHint()
@@ -91,6 +94,7 @@ export class TileGrid extends Phaser.GameObjects.Container {
         Level.getInstance(this.scene).resetExp()
         this.shapePath.setPath(0)
         this.isNext = false
+        this.startIdleTimer();
 
         console.log(this.shapePath.areTweensActive())
 
@@ -169,18 +173,39 @@ export class TileGrid extends Phaser.GameObjects.Container {
         return this.tileGrid
     }
 
+    private handleInteraction(): void {
+        // Reset the idle timer whenever there's user interaction
+        if (this.idleTimer) {
+            this.idleTimer.remove(false)
+        }
+        this.startIdleTimer()
+    }
+
+    private startIdleTimer(): void {
+        // Start a timer to trigger idle animation after idleTimeoutDuration
+        this.idleTimer = this.scene.time.delayedCall(
+            this.idleTimeoutDuration,
+            this.playIdleAnimation,
+            [],
+            this
+        )
+    }
+
     public playIdleAnimation(): void {
-        if (this.idleTween) return
+        if (this.idleTween || this.isIdle) return
+
+        this.isIdle = true
 
         let i = 0
-
+        // Iterate through all tiles to animate them
         for (let y = 0; y < CONST.gridRows; y++) {
             let row = this.tileGrid![y]
             for (let x = 0; x < CONST.gridColumns; x++) {
                 let tile = row[x]
                 if (tile === undefined) continue
 
-                this.idleTween = this.scene.tweens.add({
+                // Add idle animation tween to each tile
+                this.scene.tweens.add({
                     targets: tile,
                     scale: 0.6,
                     ease: 'sine.inout',
@@ -189,6 +214,9 @@ export class TileGrid extends Phaser.GameObjects.Container {
                     repeat: 2,
                     yoyo: true,
                     repeatDelay: 200,
+                    onComplete: () => {
+                        this.isIdle = false // Reset idle flag when animation completes
+                    },
                 })
 
                 i++
@@ -197,13 +225,9 @@ export class TileGrid extends Phaser.GameObjects.Container {
                 }
             }
         }
-    }
 
-    public stopIdleAnimation(): void {
-        if (this.idleTween) {
-            this.idleTween.stop()
-            this.idleTween = undefined
-        }
+        // Restart the idle timer to loop the animation
+        this.startIdleTimer();
     }
 
     private getTilePos(tileGrid: (Tile | undefined)[][], tile: Tile): any {
@@ -323,8 +347,6 @@ export class TileGrid extends Phaser.GameObjects.Container {
      * @param event
      */
     private tileDown(pointer: any, gameobject: any, event: any): void {
-        this.resetIdleTimer()
-
         if (this.canMove) {
             if (!this.firstSelectedTile) {
                 this.firstSelectedTile = gameobject
@@ -362,19 +384,6 @@ export class TileGrid extends Phaser.GameObjects.Container {
         }
     }
 
-    private resetIdleTimer(): void {
-        if (this.idleTimer) {
-            this.idleTimer.remove(false)
-        }
-
-        this.idleTimer = this.scene.time.addEvent({
-            delay: 10000,
-            callback: () => this.playIdleAnimation(),
-            callbackScope: this,
-            loop: true,
-        })
-    }
-
     /**
      * This function will take care of the swapping of the two selected tiles.
      * It will only work, if two tiles have been selected.
@@ -409,7 +418,7 @@ export class TileGrid extends Phaser.GameObjects.Container {
                 targets: this.firstSelectedTile,
                 x: this.secondSelectedTile.x,
                 y: this.secondSelectedTile.y,
-                ease: 'Linear',
+                ease: 'Back.easeIn',
                 duration: 400,
                 repeat: 0,
                 yoyo: false,
@@ -419,7 +428,7 @@ export class TileGrid extends Phaser.GameObjects.Container {
                 targets: this.secondSelectedTile,
                 x: this.firstSelectedTile.x,
                 y: this.firstSelectedTile.y,
-                ease: 'Linear',
+                ease: 'Back.easeIn',
                 duration: 400,
                 repeat: 0,
                 yoyo: false,
@@ -533,7 +542,7 @@ export class TileGrid extends Phaser.GameObjects.Container {
             this.scene.time.delayedCall(400, () => {
                 this.canMove = true
             })
-            
+
             if (Level.getInstance(this.scene).reachGoal()) {
                 this.shapePath.setPath(Phaser.Math.RND.between(1, 3))
                 this.getTileToShuffer()
