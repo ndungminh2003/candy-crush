@@ -3,6 +3,11 @@
     "files": [
       {
         "type": "image",
+        "key": "bg",
+        "url": "./assets/bg.png"
+      },
+      {
+        "type": "image",
         "key": "cookie1",
         "url": "./assets/images/cookie1.png"
       },
@@ -65,6 +70,37 @@
         "type": "image", 
         "key": "flare",
         "url": "./assets/images/white.png"
+      },
+      {
+        "type": "atlas",
+        "key": "confetti",
+        "textureURL": "./assets/confetti/confetti.png",
+        "atlasURL": "./assets/confetti/confetti.json"
+      },
+      {
+        "type": "image",
+        "key": "bear",
+        "url": "./assets/images/bear.png"
+      },
+      {
+        "type": "image",
+        "key": "chicken",
+        "url": "./assets/images/chicken.png"
+      },
+      {
+        "type": "image",
+        "key": "fox",
+        "url": "./assets/images/fox.png"
+      },
+      {
+        "type": "image",
+        "key": "frog",
+        "url": "./assets/images/frog.png"
+      },
+      {
+        "type": "image", 
+        "key": "hippo",
+        "url": "./assets/images/hippo.png"
       }
     ]
   }
