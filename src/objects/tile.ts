@@ -6,6 +6,9 @@ export class Tile extends Phaser.GameObjects.Image {
     private tweenSelected: Phaser.Tweens.Tween
     private isCombine4: boolean = false
     private isCombine5: boolean = false
+    private point : number
+    private isActive : boolean
+   
 
     private particleCombine4: Phaser.GameObjects.Particles.ParticleEmitter
     private particleCombine5: Phaser.GameObjects.Particles.ParticleEmitter
@@ -21,6 +24,8 @@ export class Tile extends Phaser.GameObjects.Image {
         this.setOrigin(0.5, 0.5)
         this.setInteractive()
         this.scene.add.existing(this)
+        
+        this.isActive = true
 
         this.tweenSelected = this.scene.add.tween({
             targets: this,
@@ -28,6 +33,8 @@ export class Tile extends Phaser.GameObjects.Image {
             yoyo: true,
             loop: -1,
         })
+
+        this.point = 2
 
         this.tweenSelected.pause()
 
@@ -64,8 +71,20 @@ export class Tile extends Phaser.GameObjects.Image {
             .setDepth(-1)
     }
 
+    public getPoint() : number {
+        return this.point
+    }
+
+    public setIsActive (value : boolean) : void {
+        this.isActive = value
+    }
+
+    public getIsActive() : Boolean {
+        return this.isActive
+    }
+
     public getSelected(): void {
-        if (!this.isSelect) {
+        if (!this.isSelect && this.isActive) {
             this.tweenSelected.play()
         }
         this.isSelect = true

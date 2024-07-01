@@ -1,10 +1,10 @@
 export class Level {
     private static instance: Level
-    private level: number
     private exp: number = 0
+    private goal: number = 320
 
     constructor(scene: Phaser.Scene) {
-        this.level = 1
+        
     }
 
     public static getInstance(scene: Phaser.Scene): Level {
@@ -14,12 +14,8 @@ export class Level {
         return Level.instance
     }
 
-    public levelUp(): void {
-        this.level++
-    }
-
-    public getLevel(): number {
-        return this.level
+    public resetExp(): void {
+        this.exp = 0
     }
 
     public getExp(): number {
@@ -28,10 +24,18 @@ export class Level {
 
     public addExp(exp: number): void {
         this.exp += exp
-        if (this.exp >= 100 * this.level) {
-            this.levelUp()
-            this.exp = 0
-        }
     }
+
+    public reachGoal() : Boolean {
+        if (this.exp >= this.goal){
+            return true
+        }
+        return false
+    }
+
+    update(time : number, deltal : number){
+        this.reachGoal()
+    }
+
 
 }
