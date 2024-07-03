@@ -23,9 +23,7 @@ export class TilePool {
     }
 
     public getTile(x: number, y: number): Tile {
-
         if (this.pool.length > 0) {
-        
             let tile = this.pool.pop() as Tile
             tile.setVisible(true)
             tile.setTexture(
@@ -47,8 +45,6 @@ export class TilePool {
             y: y * CONST.tileHeight + CONST.tileHeight / 2,
             texture: randomTileType,
         })
-
-        
     }
 
     public returnTile(tile: Tile): void {

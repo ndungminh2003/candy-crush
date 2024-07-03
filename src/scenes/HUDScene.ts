@@ -15,7 +15,7 @@ export class HUDScene extends Phaser.Scene {
     create(): void {
         // Progress box with rounded corners
         this.progressBox = this.add.graphics()
-        this.progressBox.fillStyle(0xFF4500, 0.8)
+        this.progressBox.fillStyle(0xff4500, 0.8)
         this.progressBox.fillRect(600, 100, 320, 40) // Rounded corners
 
         // Progress bar
@@ -23,15 +23,23 @@ export class HUDScene extends Phaser.Scene {
         this.progressValue = 0
 
         // Score text
-        this.scoreText = this.add.text(600, 70, 'Score: 0', { fontFamily: 'Verdana', fontSize: '20px', color: '#ffffff' })
+        this.scoreText = this.add.text(600, 70, 'Score: 0', {
+            fontFamily: 'Verdana',
+            fontSize: '20px',
+            color: '#ffffff',
+        })
 
         // Target text
-        this.targetText = this.add.text(600, 45, 'Target: 320', { fontFamily: 'Verdana', fontSize: '20px', color: '#ffffff' })
+        this.targetText = this.add.text(600, 45, 'Target: 320', {
+            fontFamily: 'Verdana',
+            fontSize: '20px',
+            color: '#ffffff',
+        })
 
         // Create particle emitter
         this.emitter = this.add.particles(0, 0, 'flare', {
             speed: { min: -100, max: 100 },
-            color: [ 0x7f7f7f , 0x6f6f6f , 0x8f8f8f , 0x5f5f5f, 0x707070 ],
+            color: [0x7f7f7f, 0x6f6f6f, 0x8f8f8f, 0x5f5f5f, 0x707070],
             scale: { start: 0.1, end: 0 },
             blendMode: 'ADD',
             lifespan: 600,
@@ -53,7 +61,7 @@ export class HUDScene extends Phaser.Scene {
             duration: 200,
             onUpdate: () => {
                 this.progressBar.clear()
-                this.progressBar.fillStyle(0xFFA500, 1)
+                this.progressBar.fillStyle(0xffa500, 1)
                 this.progressBar.fillRect(600, 100, this.progressValue, 40) // Rounded corners
 
                 // Update particle emitter position to the right side of the progress bar

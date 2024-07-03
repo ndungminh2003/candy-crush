@@ -37,6 +37,7 @@ export class TileGrid extends Phaser.GameObjects.Container {
     private emitterSecondHint: Phaser.GameObjects.Particles.ParticleEmitter
     private shapePath: ShapePath
     private isNext: Boolean = false
+    private totalTweens: number = 0
 
     private tileArr: Tile[]
 
@@ -94,7 +95,7 @@ export class TileGrid extends Phaser.GameObjects.Container {
         Level.getInstance(this.scene).resetExp()
         this.shapePath.setPath(0)
         this.isNext = false
-        this.startIdleTimer();
+        this.startIdleTimer()
 
         console.log(this.shapePath.areTweensActive())
 
@@ -227,7 +228,7 @@ export class TileGrid extends Phaser.GameObjects.Container {
         }
 
         // Restart the idle timer to loop the animation
-        this.startIdleTimer();
+        this.startIdleTimer()
     }
 
     private getTilePos(tileGrid: (Tile | undefined)[][], tile: Tile): any {
@@ -248,30 +249,28 @@ export class TileGrid extends Phaser.GameObjects.Container {
         return pos
     }
 
-    public handleExplode(tile: Tile): void {
-        if (tile === undefined) return
+    public handleExplode(tile: Tile, delayExplode: number): void {
+        let pos = this.getTilePos(this.tileGrid!, tile)
+        if (tile === undefined || this.visited[pos.y][pos.x]) return
 
         if (tile.getIsCombine4()) {
-            this.emit4(tile)
+            this.emit4(tile, delayExplode)
             return
         } else if (tile.getIsCombine5()) {
-            this.emit5(tile)
+            this.emit5(tile, delayExplode)
             return
         } else {
-            this.emit3(tile)
+            this.emit3(tile, delayExplode)
             return
         }
     }
 
-    public emit4(tile: Tile): void {
-        if (tile === undefined) return
-
+    public emit4(tile: Tile, delayExplode: number): void {
         let pos = this.getTilePos(this.tileGrid!, tile)
+        if (tile === undefined || this.visited[pos.y][pos.x]) return
 
-        this.emit3(tile)
+        this.emit3(tile, delayExplode)
         tile.disableCombine4()
-
-        if (pos.x === -1 || pos.y === -1) return
 
         for (let i = 0; i < emit4Direction.length; i++) {
             let y = pos.y + emit4Direction[i].y
@@ -282,60 +281,55 @@ export class TileGrid extends Phaser.GameObjects.Container {
             let tile = this.tileGrid![y][x] as Tile
             if (tile === undefined) continue
 
-            this.handleExplode(tile)
+            this.handleExplode(tile, delayExplode + 50 * i)
         }
     }
 
-    public emit5(tile: Tile): void {
+    public emit5(tile: Tile, delayExplode: number): void {
         let pos = this.getTilePos(this.tileGrid!, tile)
 
-        if (pos.x === -1 || pos.y === -1) return
+        if (pos.x === -1 || pos.y === -1 || this.visited[pos.y][pos.x]) return
 
-        this.emit3(tile)
+        this.emit3(tile, delayExplode)
         tile.disableCombine5()
 
-        // remove left
-        for (let x = pos.x - 1; x >= 0; x--) {
-            let tile = this.tileGrid![pos.y][x] as Tile
-            if (tile === undefined) continue
-
-            this.handleExplode(tile)
-        }
-
-        // remove right
-        for (let x = pos.x + 1; x < CONST.gridColumns; x++) {
-            let tile = this.tileGrid![pos.y][x] as Tile
-            if (tile === undefined) continue
-
-            this.handleExplode(tile)
-        }
-
-        // remove top
-        for (let y = pos.y - 1; y >= 0; y--) {
+        for (let y = 0; y < CONST.gridRows; y++) {
             let tile = this.tileGrid![y][pos.x] as Tile
             if (tile === undefined) continue
 
-            this.handleExplode(tile)
+            this.handleExplode(tile, delayExplode + 50 * Math.abs(y - pos.y))
         }
 
-        // remove bottom
-        for (let y = pos.y + 1; y < CONST.gridRows; y++) {
-            let tile = this.tileGrid![y][pos.x] as Tile
+        for (let x = 0; x < CONST.gridColumns; x++) {
+            let tile = this.tileGrid![pos.y][x] as Tile
             if (tile === undefined) continue
 
-            this.handleExplode(tile)
+            this.handleExplode(tile, delayExplode + 50 * Math.abs(x - pos.x))
         }
     }
 
-    public emit3(tile: Tile): void {
-        if (tile === undefined) return
-
+    public emit3(tile: Tile, delayExplode: number): void {
         let tilePos = this.getTilePos(this.tileGrid!, tile)
 
-        Level.getInstance(this.scene).addExp(tile.getPoint())
-        tile.explode3()
-        TilePool.getInstance(this.scene).returnTile(tile)
-        this.tileGrid![tilePos.y][tilePos.x] = undefined
+        if (tile === undefined || this.visited[tilePos.y][tilePos.x]) return
+        this.visited[tilePos.y][tilePos.x] = true
+
+        this.totalTweens++
+        this.scene.add.tween({
+            targets: tile,
+            scale: 1,
+            duration: delayExplode,
+            onComplete: () => {
+                this.totalTweens--
+                Level.getInstance(this.scene).addExp(tile.getPoint())
+                tile.explode3()
+                TilePool.getInstance(this.scene).returnTile(tile)
+                this.tileGrid![tilePos.y][tilePos.x] = undefined
+                if (this.totalTweens === 0) {
+                    this.resetTile()
+                }
+            },
+        })
     }
 
     /**
@@ -483,7 +477,7 @@ export class TileGrid extends Phaser.GameObjects.Container {
                             this.tileGrid![tilePos.y][tilePos.x] = undefined
                             totalTweens--
                             if (totalTweens === 0) {
-                                this.removeTileGroup(matches, this.resetTile.bind(this))
+                                this.removeTileGroup(matches)
                             }
                         },
                     })
@@ -516,7 +510,7 @@ export class TileGrid extends Phaser.GameObjects.Container {
 
                             totalTweens--
                             if (totalTweens === 0) {
-                                this.removeTileGroup(matches, this.resetTile.bind(this))
+                                this.removeTileGroup(matches)
                             }
                         },
                     })
@@ -526,7 +520,7 @@ export class TileGrid extends Phaser.GameObjects.Container {
         }
 
         if (!tweensAdded) {
-            this.removeTileGroup(matches, this.resetTile.bind(this))
+            this.removeTileGroup(matches)
         }
     }
 
@@ -546,7 +540,7 @@ export class TileGrid extends Phaser.GameObjects.Container {
             if (Level.getInstance(this.scene).reachGoal()) {
                 this.shapePath.setPath(Phaser.Math.RND.between(1, 3))
                 this.getTileToShuffer()
-                this.shapePath.setPositionsOnPath(this.tileArr)
+                this.shapePath.setPositions(this.tileArr)
                 this.isNext = true
                 ParticleManager.getInstance(this.scene).startConfetti()
 
@@ -647,8 +641,14 @@ export class TileGrid extends Phaser.GameObjects.Container {
         this.secondSelectedTile = undefined
     }
 
-    private removeTileGroup(matches: any, callback: () => void): void {
+    private removeTileGroup(matches: any): void {
         // get only match3 in matches
+
+        for (let i = 0; i < CONST.gridRows; i++) {
+            for (let j = 0; j < CONST.gridColumns; j++) {
+                this.visited[i][j] = false
+            }
+        }
 
         const match3 = matches.filter((match: any) => match.length === 3)
 
@@ -660,13 +660,14 @@ export class TileGrid extends Phaser.GameObjects.Container {
                 const tilePos = this.getTilePos(this.tileGrid!, tile)
 
                 if (tilePos.x !== -1 && tilePos.y !== -1) {
-                    this.handleExplode(tile)
+                    this.handleExplode(tile, 0)
                 }
             }
         }
 
-        // Call the callback after removing the tile group
-        callback()
+        if (this.totalTweens === 0) {
+            this.resetTile()
+        }
     }
 
     private getMatches(tileGrid: (Tile | undefined)[][]): Tile[][] {

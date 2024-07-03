@@ -3,9 +3,7 @@ export class Level {
     private exp: number = 0
     private goal: number = 320
 
-    constructor(scene: Phaser.Scene) {
-        
-    }
+    constructor(scene: Phaser.Scene) {}
 
     public static getInstance(scene: Phaser.Scene): Level {
         if (!Level.instance) {
@@ -26,16 +24,14 @@ export class Level {
         this.exp += exp
     }
 
-    public reachGoal() : Boolean {
-        if (this.exp >= this.goal){
+    public reachGoal(): Boolean {
+        if (this.exp >= this.goal) {
             return true
         }
         return false
     }
 
-    update(time : number, deltal : number){
+    update(time: number, deltal: number) {
         this.reachGoal()
     }
-
-
 }

@@ -1,11 +1,5 @@
 import { Tile } from './Tile'
-
-export enum PathType {
-    NULL,
-    CIRCLE,
-    RECTANGLE,
-    TRIANGLE,
-}
+import { PathType } from '../const/const'
 
 export class ShapePath {
     private pathType: PathType
@@ -17,11 +11,15 @@ export class ShapePath {
     private progress: number = 0
 
     constructor(scene: Phaser.Scene) {
-        this.circle = new Phaser.Geom.Circle(250, 300, 200)
-        this.rectangle = new Phaser.Geom.Rectangle(50, 100, 400, 400)
-        this.triangle = new Phaser.Geom.Triangle(50, 500, 250, 200, 450, 500)
         this.scene = scene
         this.activeTweens = 0
+        this.init()
+    }
+
+    private init() {
+        this.circle = new Phaser.Geom.Circle(300, 350, 250)
+        this.rectangle = new Phaser.Geom.Rectangle(70, 80, 500, 500)
+        this.triangle = new Phaser.Geom.Triangle(50, 550, 270, 80, 550, 550)
     }
 
     public setPath(pathType: PathType) {
@@ -45,7 +43,7 @@ export class ShapePath {
         return this.activeTweens > 0
     }
 
-    public setPositionsOnPath(tile: Tile[]) {
+    public setPositions(tile: Tile[]) {
         let depth = 1
         let points = this.getPoints(tile)
 
@@ -75,7 +73,7 @@ export class ShapePath {
 
         for (let i = 0; i < tiles.length; i++) {
             let progress = (this.progress + i * dt) % 1
-            let point: Phaser.Geom.Point = new Phaser.Geom.Point() // Create a new Phaser.Geom.Point
+            let point: Phaser.Geom.Point = new Phaser.Geom.Point()
 
             switch (this.pathType) {
                 case PathType.CIRCLE:

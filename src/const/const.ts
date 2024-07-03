@@ -5,23 +5,12 @@ export let CONST = {
     gridColumns: 8,
     tileWidth: 72,
     tileHeight: 72,
-    candyTypes: [
-        // 'cookie1',
-        // 'cookie2',
-        // 'croissant',
-        // 'cupcake',
-        // 'donut',
-        // 'eclair',
-        // 'macaroon',
-        // 'pie',
-        // 'poptart1',
-        // 'poptart2',
-        // 'starcookie1',
-        // 'starcookie2',
-        'bear',
-        'chicken',
-        'fox',
-        'frog',
-        'hippo',
-    ],
+    candyTypes: ['bear', 'chicken', 'fox', 'frog', 'hippo'],
+}
+
+export enum PathType {
+    NULL,
+    CIRCLE,
+    RECTANGLE,
+    TRIANGLE,
 }
